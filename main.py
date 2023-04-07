@@ -28,6 +28,7 @@ from PySide2.QtWidgets import (
 )
 
 from PySide2 import QtGui
+from functools import partial
 from snap7.types import Areas,WordLen
 from yio import Io
 from curve import Curve
@@ -66,8 +67,8 @@ class MyWorker(QRunnable):
         while True:
             if not self.queue.empty():
                 q=self.queue.get() #取1个值
-                if q.enable: # 激活
-                    q.slide()
+                if q is not None and q.enable: # 激活
+                    q.read()
                 self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             # 退出
@@ -79,8 +80,48 @@ class MyWorker(QRunnable):
     def set_stop(self):
         self.running=False
 
-# 变量类
+# 变量类画图
+class VcPlot(QObject):
+    def __init__(self,name,address,widget):
+        #self.vid=vid
+        self.name=name
+        self.address=address
+        self.widget=widget
+        self.plot=None
+        self.pen = pg.mkPen(color=self.random_color(), width=1, style=Qt.SolidLine)
+        self.x=[]
+        self.y=[]
+        
+        self.mplot()
+    
+    @Slot(list) #x,y,addr
+    def move(self,data_list):
+        if self.address==data_list[2]: #地址相符的更新
+            self.x.append(data_list[0])
+            self.y.append(data_list[1])
+            if len(self.x)>1000:
+                self.x=self.x[1:]
+                self.y=self.y[1:]
+            
+    def mplot(self):
+        self.plot=self.widget.plot(self.x,self.y,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
+    
+    def update_plot(self):
+        self.plot.setData(self.x,self.y)
+    
+    def get_plot(self):
+        return (self.vid,self.plot)
+    
+    #随机颜色
+    def random_color(self):        
+        r = random.randint(0,255)
+        g = random.randint(0,255)
+        b = random.randint(0,255)
+        return (r,g,b)
+
+# 变量类 variable class
 class Vc(QObject):
+    data_readed=Signal(list)
     
     def __init__(self,client,db,db_data):
         super().__init__()
@@ -91,20 +132,13 @@ class Vc(QObject):
         self.xv=[]
         self.yv=[]
         self.enable=False
-        self.pen = pg.mkPen(color=self.random_color(), width=1, style=Qt.SolidLine)
+        
         self.data_type={
         'bool':'B',
         'word':'>h',
         'int':'>i',
         'real':'>f'
         }
-        
-        self.widget=None
-        self.plot=None
-        self.plot_item=None
-        
-        self.min_value=0
-        self.max_value=99999
         
     # 响应 data_update 
     @Slot(str)
@@ -143,7 +177,6 @@ class Vc(QObject):
             print('Line 131 in main.py: ',str(e),self.db_data.address,data_b)
         #print('%s: %s, cost %d.' % (self.db_data.address,data_b,self.client.get_exec_time()))
         #print(self.db_data.address,self.db_data.areas,self.db_data.number,self.db_data.start,self.db_data.size,data_b,data_value)
-        #print(self.db_data.name,self.db_data.address,data_b,data_value)
         
         #写入数据库
         self.db.save(
@@ -156,20 +189,12 @@ class Vc(QObject):
             self.db_data.data_type
         )
         # 返回x, y
-        return datetime.now().timestamp(), data_value
+        return datetime.now().timestamp(), data_value  
         
-    #滑动读数    
-    def slide(self):
-        if self.enable:
-            x,y=self.read_data()
-            self.xv.append(x)
-            self.yv.append(y)
-            if len(self.xv)>1000:
-                self.xv=self.xv[1:]
-                self.yv=self.yv[1:]            
-        
-    def mplot(self):
-        self.plot=self.widget.plot(self.xv,self.yv,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
+    def read(self):
+        x,y=self.read_data()
+        #发射信号
+        self.data_readed.emit([x,y,self.db_data.address])
         
     # bytearray计算值
     # q: bytearray, t: data type
@@ -197,18 +222,11 @@ class Vc(QObject):
     
     def get_enable(self):
         return self.enable
-
-    #随机颜色
-    def random_color(self):        
-        r = random.randint(0,255)
-        g = random.randint(0,255)
-        b = random.randint(0,255)
-        return (r,g,b)
         
 
 # 主函数
 class Main(uiclass, baseclass):
-    data_update=Signal(str)
+    plot_update=Signal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -229,7 +247,7 @@ class Main(uiclass, baseclass):
         # 定时刷新图形
         self.timer=QTimer()
         self.timer.setInterval(1000) #1s
-        self.timer.timeout.connect(self.refresh_plot)
+        self.timer.timeout.connect(partial(self.plot_update.emit,'hi'))
         
         # 数据
         self.db=Db()
@@ -257,7 +275,8 @@ class Main(uiclass, baseclass):
             '100ms':self.queue_100ms,
             '1s':self.queue_1s,
         }
-        self.queue_vc=[]
+        self.queue_vc=[] #读数队列
+        self.queue_plot=[] #绘图队列
         
         # 实例化
         self.worker_10ms=MyWorker('10ms',self.queue_10ms,10)
@@ -276,7 +295,6 @@ class Main(uiclass, baseclass):
         self.vcs=[]
         for db_data in self.dbs:
             vc=Vc(self.client,self.db,db_data)
-            self.data_update.connect(vc.hi)
             self.vcs.append(vc)
         
     def start(self):
@@ -286,14 +304,8 @@ class Main(uiclass, baseclass):
     def closeEvent(self, event):
         self.stop()
         print("main window is closed.")
-        event.accept()
-        
-    # 刷新绘图
-    def refresh_plot(self):
-        self.data_update.emit('hii')
-        for v in self.vcs:
-            if v.plot is not None:
-                v.plot.setData(v.xv,v.yv)
+        event.accept()     
+
         
     # 停止定时器及线程            
     def stop(self):
@@ -350,22 +362,30 @@ class Main(uiclass, baseclass):
         widget.addLegend()
         widget.setAxisItems({'bottom': pg.DateAxisItem()})
         
-        for v in self.vcs:
-            if v.name==item:
-                v.enable=True
-                # 布尔Y设置0-1，其他格数设置为1
-                if v.db_data.data_type=='bool':
+        for vc in self.vcs:
+            if vc.name==item:
+                vc.enable=True                
+                
+                #布尔y设置0-1，其他格数设置为1
+                if vc.db_data.data_type=='bool':
                     widget.setYRange(0,1,padding=0)
                     
-                v.widget=widget                
-                if v.name not in self.queue_vc:
-                    widget.setTitle(v.db_data.address)
-                    self.plot_layout.addWidget(widget)
-                    self.queues[v.db_data.delay].put(v)
-                    self.queue_vc.append(v.name)
+                widget.setTitle(vc.db_data.address)
+                self.plot_layout.addWidget(widget)
+                
+                #实例化
+                vc_plot=VcPlot(vc.name,vc.db_data.address,widget)               
+                #信号连接
+                self.plot_update.connect(vc_plot.update_plot)
+                vc.data_readed.connect(vc_plot.move)
+                
+                self.queue_plot.append(vc_plot)
+                               
+                if vc.name not in self.queue_vc: 
+                    self.queues[vc.db_data.delay].put(vc)
+                    self.queue_vc.append(vc.name)
                 else:
-                    print('vc is already in queue, skip.')
-                v.mplot()
+                    print('vc is already in read queue, skip.')
                 break
     #拖放
     def mousePressEvent(self, event):
