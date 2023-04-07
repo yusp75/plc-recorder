@@ -65,15 +65,16 @@ class MyWorker(QRunnable):
 
     def run(self):
         while True:
+            if not self.running:
+                return
+                
             if not self.queue.empty():
                 q=self.queue.get() #取1个值
                 if q is not None and q.enable: # 激活
                     q.read()
                 self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
-            # 退出
-            if not self.running:
-                break
+            
             QThread.msleep(self.delay*10)
     
     # 设置运行标志
@@ -106,7 +107,8 @@ class VcPlot(QObject):
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
     
-    def update_plot(self):
+    @Slot(str)
+    def update_plot(self,msg):
         self.plot.setData(self.x,self.y)
     
     def get_plot(self):
@@ -304,19 +306,23 @@ class Main(uiclass, baseclass):
     def closeEvent(self, event):
         self.stop()
         print("main window is closed.")
-        event.accept()     
+        event.accept()
 
         
     # 停止定时器及线程            
     def stop(self):
-        self.timer.stop()  
+        self.timer.stop()          
         
-        self.pool.clear()
         self.worker_10ms.set_stop()
         self.worker_20ms.set_stop()
         self.worker_50ms.set_stop()
         self.worker_100ms.set_stop()
-        self.worker_1s.set_stop()          
+        self.worker_1s.set_stop() 
+        self.pool.waitForDone(100)
+        
+
+        #for vc in self.vcs:
+        #    vc.data_readed.disconnect()
     
     # 1次读取多个变量
     def batch_read(self):
