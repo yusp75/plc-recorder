@@ -362,12 +362,18 @@ class Main(uiclass, baseclass):
     
     @Slot(str)
     def menu_dblclick2(self, item):
+        '''
+        菜单双击
+        '''
         #新建plotwidget
+        WIDGET_MIN_HEIGHT=160
+        
         widget=pg.PlotWidget()
         widget.setBackground('w') 
         widget.showGrid(x=True,y=True)
         widget.addLegend()
         widget.setAxisItems({'bottom': pg.DateAxisItem()})
+        widget.setMinimumHeight(WIDGET_MIN_HEIGHT)
         
 
         for vc in self.vcs:
@@ -401,12 +407,12 @@ class Main(uiclass, baseclass):
         if (event.button() == Qt.LeftButton and self.tree.geometry().contains(event.pos())):
             print(event.pos())
             drag = QDrag(self)
-            mimeData = QMimeData()
-            mimeData.setText("drag")
-            drag.setMimeData(mimeData)
-            dropAction=Qt.DropAction()
+            mime_data = QMimeData()
+            mime_data.setText("drag")
+            drag.setMimeData(mime_data)
+            drop_action=Qt.DropAction()
             #drag.setPixmap(iconPixmap)
-            dropAction = drag.exec()
+            drop_action = drag.exec()
         
      
 if __name__ == '__main__':
