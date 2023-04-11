@@ -25,8 +25,9 @@ from PySide2.QtWidgets import (
     QLineEdit, 
     QTableWidget, 
     QHeaderView,
+    QListWidgetItem,
 )
-
+from PySide2.QtGui import QDrag
 from PySide2 import QtGui
 from functools import partial
 from snap7.types import Areas,WordLen
@@ -292,13 +293,13 @@ class Main(uiclass, baseclass):
         self.pool.start(self.worker_50ms)
         self.pool.start(self.worker_100ms)
         self.pool.start(self.worker_1s)
-        
+
         # 变量列表
         self.vcs=[]
         for db_data in self.dbs:
             vc=Vc(self.client,self.db,db_data)
             self.vcs.append(vc)
-        
+
     def start(self):
         self.timer.start()
 
@@ -347,7 +348,7 @@ class Main(uiclass, baseclass):
         '''
         pass
     
-    # 菜单点击
+    # 菜单双击
     @Slot(list)
     def menu_dblclick(self, items):
         print('main2:',items)
@@ -368,16 +369,17 @@ class Main(uiclass, baseclass):
         widget.addLegend()
         widget.setAxisItems({'bottom': pg.DateAxisItem()})
         
+
         for vc in self.vcs:
             if vc.name==item:
                 vc.enable=True                
                 
                 #布尔y设置0-1，其他格数设置为1
                 if vc.db_data.data_type=='bool':
-                    widget.setYRange(0,1,padding=0)
-                    
-                widget.setTitle(vc.db_data.address)
-                self.plot_layout.addWidget(widget)
+                    widget.setYRange(0,1,padding=0)                    
+                
+                widget.setTitle(vc.db_data.address)                                
+                self.layout.addWidget(widget)
                 
                 #实例化
                 vc_plot=VcPlot(vc.name,vc.db_data.address,widget)               
@@ -395,15 +397,15 @@ class Main(uiclass, baseclass):
                 break
     #拖放
     def mousePressEvent(self, event):
-        print(event.pos())
+        
         if (event.button() == Qt.LeftButton and self.tree.geometry().contains(event.pos())):
-
+            print(event.pos())
             drag = QDrag(self)
             mimeData = QMimeData()
-            mimeData.setText(commentEdit.toPlainText())
+            mimeData.setText("drag")
             drag.setMimeData(mimeData)
             dropAction=Qt.DropAction()
-            drag.setPixmap(iconPixmap)
+            #drag.setPixmap(iconPixmap)
             dropAction = drag.exec()
         
      
