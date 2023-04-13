@@ -35,8 +35,10 @@ class Menu(QObject):
             root.appendRow([item,item2])
         self.tree.expandAll()
         
-        #菜单树点击
     def tree_clicked(self,model_index):
+        '''
+        菜单树点击
+        '''
         row=model_index.row()
         #col=item.col()
         item=self.model.item(row)

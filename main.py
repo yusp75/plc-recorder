@@ -11,6 +11,7 @@ from PySide2.QtCore import (
     Signal,
     QMutex,
     QMimeData,
+    QModelIndex,
 )
 from PySide2.QtWidgets import (
     QApplication,
@@ -27,7 +28,7 @@ from PySide2.QtWidgets import (
     QHeaderView,
     QListWidgetItem,
 )
-from PySide2.QtGui import QDrag
+from PySide2.QtGui import QDrag,QStandardItemModel
 from PySide2 import QtGui
 from functools import partial
 from snap7.types import Areas,WordLen
@@ -236,21 +237,24 @@ class MyPlotWidget(pg.PlotWidget):
     def init(self, parent=None):
         super().init(parent)
         self.setAcceptDrops(True) 
-        
+
+    def dragMoveEvent(self, event):
+        src=event.source()
+        if src and src!=self:
+            event.setDropAction(Qt.MoveAction)
+
     def dragEnterEvent(self, event):
-        print("dragEnterEvent triggered")
-        if event.mimeData().hasUrls():
+        #改指示
+        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
             event.acceptProposedAction()
-            print("Get file")
         else:
             event.ignore()
-            print("Ignore file")
 
     def dropEvent(self, event):
-        print("dropEvent triggered")
-        for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            print("Dropped file:", file_path)     
+        data = event.mimeData()
+        source_item = QStandardItemModel()
+        source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
+        print(source_item.item(0, 0).text())    
 
 # 主函数
 class Main(uiclass, baseclass):
@@ -434,16 +438,7 @@ class Main(uiclass, baseclass):
                 else:
                     print('vc is already in read queue, skip.')
                 break
-    
-    def dropEvent(self, e):
-        print(e.mimeData())
 
-    def dragEnterEvent(self, e):
-        if e.mimeData().hasFormat('text/plain'):
-            e.accept()
-        else:
-            print(e)   
-    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
