@@ -228,7 +228,29 @@ class Vc(QObject):
     
     def get_enable(self):
         return self.enable
+
+class MyPlotWidget(pg.PlotWidget):
+    '''
+    拖曳事件
+    '''
+    def init(self, parent=None):
+        super().init(parent)
+        self.setAcceptDrops(True) 
         
+    def dragEnterEvent(self, event):
+        print("dragEnterEvent triggered")
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            print("Get file")
+        else:
+            event.ignore()
+            print("Ignore file")
+
+    def dropEvent(self, event):
+        print("dropEvent triggered")
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            print("Dropped file:", file_path)     
 
 # 主函数
 class Main(uiclass, baseclass):
@@ -378,7 +400,7 @@ class Main(uiclass, baseclass):
         #新建plotwidget
         widget_min_height=160
 
-        widget=pg.PlotWidget()
+        widget=MyPlotWidget()
         widget.setBackground('w') 
         widget.showGrid(x=True,y=True)
         widget.addLegend()
@@ -412,23 +434,17 @@ class Main(uiclass, baseclass):
                 else:
                     print('vc is already in read queue, skip.')
                 break
-    #拖放
-    def mousePressEvent(self, event):
-        '''
-        重写鼠标按下事件
-        '''
-        print(event.pos())
-        if (event.button() == Qt.LeftButton and self.tree.geometry().contains(event.pos())):
-            print(event.pos())
-            drag = QDrag(self)
-            mime_data = QMimeData()
-            mime_data.setText("drag")
-            drag.setMimeData(mime_data)
-            drop_action=Qt.DropAction()
-            #drag.setPixmap(iconPixmap)
-            drop_action = drag.exec()
-        
-     
+    
+    def dropEvent(self, e):
+        print(e.mimeData())
+
+    def dragEnterEvent(self, e):
+        if e.mimeData().hasFormat('text/plain'):
+            e.accept()
+        else:
+            print(e)   
+    
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     # 主窗体
