@@ -116,7 +116,10 @@ class VcPlot(QObject):
         return (self.vid,self.plot)
     
     #随机颜色
-    def random_color(self):        
+    def random_color(self): 
+        '''
+        随机颜色r g b
+        '''       
         r = random.randint(0,255)
         g = random.randint(0,255)
         b = random.randint(0,255)
@@ -256,7 +259,6 @@ class Main(uiclass, baseclass):
         self.db=Db()
         
         self.menu=Menu(self.tree)
-        self.tree.setDragDropMode(QTreeView.InternalMove)
 
         self.menu_items=[] #树形菜单项集
         self.menu.item_changed.connect(self.menu_dblclick)
@@ -301,17 +303,23 @@ class Main(uiclass, baseclass):
             self.vcs.append(vc)
 
     def start(self):
+        '''
+        启动定时器
+        '''
         self.timer.start()
-
-    #重写关闭事件
+    
     def closeEvent(self, event):
+        '''
+        #重写关闭事件
+        '''
         self.stop()
         print("main window is closed.")
-        event.accept()
-
-        
-    # 停止定时器及线程            
+        event.accept()        
+                
     def stop(self):
+        '''
+        停止定时器及线程
+        '''
         self.timer.stop()          
         
         self.worker_10ms.set_stop()
@@ -346,11 +354,13 @@ class Main(uiclass, baseclass):
         Returns:
             Tuple with the return code from the snap7 library and the list of items.        
         '''
-        pass
+        pass    
     
-    # 菜单双击
     @Slot(list)
     def menu_dblclick(self, items):
+        '''
+        树形菜单项目双击
+        '''
         print('main2:',items)
         self.fields=self.menu.get_menu_items()
         #修改变量类的状态
@@ -366,14 +376,15 @@ class Main(uiclass, baseclass):
         菜单双击
         '''
         #新建plotwidget
-        WIDGET_MIN_HEIGHT=160
-        
+        widget_min_height=160
+
         widget=pg.PlotWidget()
         widget.setBackground('w') 
         widget.showGrid(x=True,y=True)
         widget.addLegend()
         widget.setAxisItems({'bottom': pg.DateAxisItem()})
-        widget.setMinimumHeight(WIDGET_MIN_HEIGHT)
+        widget.setMinimumHeight(widget_min_height)
+        widget.setAcceptDrops(True)
         
 
         for vc in self.vcs:
@@ -403,7 +414,10 @@ class Main(uiclass, baseclass):
                 break
     #拖放
     def mousePressEvent(self, event):
-        
+        '''
+        重写鼠标按下事件
+        '''
+        print(event.pos())
         if (event.button() == Qt.LeftButton and self.tree.geometry().contains(event.pos())):
             print(event.pos())
             drag = QDrag(self)

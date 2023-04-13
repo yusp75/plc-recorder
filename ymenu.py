@@ -5,6 +5,9 @@ from myaml import Myaml
 import os
 
 class Menu(QObject):
+    '''
+    菜单定义
+    '''
     #信号定义
     item_changed=Signal(list)
     item_dblclicked=Signal(str)
