@@ -103,11 +103,11 @@ class VcPlot(QObject):
             self.x.append(data_list[0])
             self.y.append(data_list[1])
             if len(self.x)>1000:
-                self.x=self.x[1:]
-                self.y=self.y[1:]
+                self.x[:-1]=self.x[1:]
+                self.y[:-1]=self.y[1:]
             
     def mplot(self):
-        self.plot=self.widget.plot(self.x,self.y,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
+        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
     
     @Slot(str)
     def update_plot(self,msg):
@@ -153,7 +153,9 @@ class Vc(QObject):
         print('hi, %s-%s'%(self.name, m_str))
         
     def read_data(self):
-        #读数据
+        '''
+        读数据
+        '''
         #使用mutex保护client
         mutex.lock() #锁上
         data_b=None
@@ -267,6 +269,7 @@ class MyPlotWidget(pg.PlotWidget):
         #发送放下信号
         self.item_droped.emit({'name':name,'widget':self,'msg':'menu item droped'})
 
+
 # 主函数
 class Main(uiclass, baseclass):
     plot_update=Signal(str)
@@ -339,6 +342,8 @@ class Main(uiclass, baseclass):
         for db_data in self.dbs:
             vc=Vc(self.client,self.db,db_data)
             self.vcs.append(vc)
+
+        pg.setConfigOption('useOpenGL',True)
 
     #end of init
 
@@ -416,7 +421,6 @@ class Main(uiclass, baseclass):
         树形菜单双击
         '''
         #新建plotwidget
-        #self.my_plot([item,None,'item double click'])
         self.my_plot({'name':item,'widget':None,'msg':'menu double click'})
         
     @Slot(dict)
@@ -442,8 +446,9 @@ class Main(uiclass, baseclass):
                 #布尔y设置0-1，其他格数设置为1
                 if vc.db_data.data_type=='bool':
                     widget.setYRange(0,1,padding=0)                    
-                
-                widget.setTitle(vc.db_data.address)                                
+                #标题：名称+地址
+                title=widget.windowTitle()
+                widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))                                
                 self.layout.addWidget(widget)
                 
                 #实例化
