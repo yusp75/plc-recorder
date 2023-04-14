@@ -237,14 +237,14 @@ class MyPlotWidget(pg.PlotWidget):
     #拖曳信号
     item_droped=Signal(dict)
 
-    def init(self, parent=None):
-        super().init(parent)
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
         self.widget_min_height=160
-        self.plotItem.setBackground('w') 
+        self.setBackground('w') 
         self.showGrid(x=True,y=True)
         self.addLegend()
-        self.plotItem.setAxisItems({'bottom': pg.DateAxisItem()})
+        self.setAxisItems({'bottom': pg.DateAxisItem()})
         self.setMinimumHeight(self.widget_min_height) 
 
     def dragMoveEvent(self, event):
@@ -264,8 +264,8 @@ class MyPlotWidget(pg.PlotWidget):
         source_item = QStandardItemModel()
         source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
         name=source_item.item(0, 0).text()
-        print('Droped:', name)
-        self.item_droped.emit({'name':name,'widget':self,'msg':'drop'})
+        #发送放下信号
+        self.item_droped.emit({'name':name,'widget':self,'msg':'menu item droped'})
 
 # 主函数
 class Main(uiclass, baseclass):
