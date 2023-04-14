@@ -234,9 +234,18 @@ class MyPlotWidget(pg.PlotWidget):
     '''
     拖曳事件
     '''
+    #拖曳信号
+    item_droped=Signal(dict)
+
     def init(self, parent=None):
         super().init(parent)
-        self.setAcceptDrops(True) 
+
+        self.widget_min_height=160
+        self.plotItem.setBackground('w') 
+        self.showGrid(x=True,y=True)
+        self.addLegend()
+        self.plotItem.setAxisItems({'bottom': pg.DateAxisItem()})
+        self.setMinimumHeight(self.widget_min_height) 
 
     def dragMoveEvent(self, event):
         src=event.source()
@@ -254,7 +263,9 @@ class MyPlotWidget(pg.PlotWidget):
         data = event.mimeData()
         source_item = QStandardItemModel()
         source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
-        print(source_item.item(0, 0).text())    
+        name=source_item.item(0, 0).text()
+        print('Droped:', name)
+        self.item_droped.emit({'name':name,'widget':self,'msg':'drop'})
 
 # 主函数
 class Main(uiclass, baseclass):
@@ -288,6 +299,7 @@ class Main(uiclass, baseclass):
 
         self.menu_items=[] #树形菜单项集
         self.menu.item_changed.connect(self.menu_dblclick)
+        #连接双击信号
         self.menu.item_dblclicked.connect(self.menu_dblclick2)
         
         self.fields=[]
@@ -327,6 +339,8 @@ class Main(uiclass, baseclass):
         for db_data in self.dbs:
             vc=Vc(self.client,self.db,db_data)
             self.vcs.append(vc)
+
+    #end of init
 
     def start(self):
         '''
@@ -399,22 +413,30 @@ class Main(uiclass, baseclass):
     @Slot(str)
     def menu_dblclick2(self, item):
         '''
-        菜单双击
+        树形菜单双击
         '''
         #新建plotwidget
-        widget_min_height=160
-
-        widget=MyPlotWidget()
-        widget.setBackground('w') 
-        widget.showGrid(x=True,y=True)
-        widget.addLegend()
-        widget.setAxisItems({'bottom': pg.DateAxisItem()})
-        widget.setMinimumHeight(widget_min_height)
-        widget.setAcceptDrops(True)
+        #self.my_plot([item,None,'item double click'])
+        self.my_plot({'name':item,'widget':None,'msg':'menu double click'})
         
+    @Slot(dict)
+    def my_plot(self, param):
+        '''
+        param: 0-name, 1-widget
+        双击菜单项，新增组件绘图；拖曳菜单项，在组件上增加绘图
+        '''
+
+        name=param['name']
+        widget=param['widget']
+        print(param['msg'])
+
+        if widget is None:
+            widget=MyPlotWidget() 
+            #新建实例，连接放下信号
+            widget.item_droped.connect(self.my_plot)                 
 
         for vc in self.vcs:
-            if vc.name==item:
+            if vc.name==name:
                 vc.enable=True                
                 
                 #布尔y设置0-1，其他格数设置为1
@@ -427,18 +449,21 @@ class Main(uiclass, baseclass):
                 #实例化
                 vc_plot=VcPlot(vc.name,vc.db_data.address,widget)               
                 #信号连接
+                #更新
                 self.plot_update.connect(vc_plot.update_plot)
+                #读数
                 vc.data_readed.connect(vc_plot.move)
-                
+                #绘画队列
                 self.queue_plot.append(vc_plot)
-                               
+                #数据读取队列               
                 if vc.name not in self.queue_vc: 
                     self.queues[vc.db_data.delay].put(vc)
                     self.queue_vc.append(vc.name)
                 else:
                     print('vc is already in read queue, skip.')
-                break
 
+                #退出循环
+                break
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
