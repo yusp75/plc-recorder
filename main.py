@@ -107,17 +107,18 @@ class VcPlot(QObject):
                 self.y[:-1]=self.y[1:]
             
     def mplot(self):
-        #self.plot=pg.PlotCurveItem(self.x,self.y,pen=self.pen,mouseWidth=10,clickable=True)
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
+        lengend=pg.LegendItem((80,60),offset=(70,20))
+        lengend.setParentItem(self.widget.graphicsItem())
+        lengend.addItem(self.plot,self.name)
+
         self.plot.sigClicked.connect(self.item_clicked)
-        self.widget.getViewBox().addItem(self.plot)
+        self.widget.getViewBox().addItem(self.plot)        
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
-        print(event.buttons())
-        if event.buttons() == Qt.RightButton:
-            self.widget.getViewBox().removeItem(obj)
+        print(event.button())
 
     
     @Slot(str)
@@ -243,11 +244,23 @@ class Vc(QObject):
     def get_enable(self):
         return self.enable
 
+class MyLegend(pg.LegendItem):
+    '''
+    重写拖放事件
+    '''
+    def __init__(self):
+        super().__init__()
+
+    def mouseDragEvent(self, ev):
+        print('hi')
+        super().mouseDragEvent(ev)
+
+
 class MyPlotWidget(pg.PlotWidget):
     '''
-    拖曳事件
+    重写拖放事件
     '''
-    #拖曳信号
+    #拖放信号
     item_droped=Signal(dict)
 
     def __init__(self, parent=None):
@@ -256,7 +269,6 @@ class MyPlotWidget(pg.PlotWidget):
         self.widget_min_height=160
         self.setBackground('w') 
         self.showGrid(x=True,y=True)
-        self.addLegend()
         self.setAxisItems({'bottom': pg.DateAxisItem()})
         self.setMinimumHeight(self.widget_min_height) 
         #不显示上下文菜单
@@ -283,6 +295,7 @@ class MyPlotWidget(pg.PlotWidget):
         name=source_item.item(0, 0).text()
         #发送放下信号
         self.item_droped.emit({'name':name,'widget':self,'msg':'menu item %s droped'%name})
+
 
 
 # 主函数
@@ -423,7 +436,6 @@ class Main(uiclass, baseclass):
         '''
         树形菜单项目双击
         '''
-        print('main2:',items)
         self.fields=self.menu.get_menu_items()
         #修改变量类的状态
         for v in self.vcs:
