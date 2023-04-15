@@ -77,7 +77,7 @@ class MyWorker(QRunnable):
                 self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             
-            QThread.msleep(self.delay*10)
+            QThread.msleep(self.delay)
     
     # 设置运行标志
     def set_stop(self):
@@ -107,12 +107,17 @@ class VcPlot(QObject):
                 self.y[:-1]=self.y[1:]
             
     def mplot(self):
+        #self.plot=pg.PlotCurveItem(self.x,self.y,pen=self.pen,mouseWidth=10,clickable=True)
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
+        self.plot.curve.setClickable(True)
         self.plot.sigClicked.connect(self.item_clicked)
+        self.widget.getViewBox().addItem(self.plot)
 
-    def item_clicked(self,event):
-        print(event)
-        self.plot.clear()
+    @Slot(object,object)
+    def item_clicked(self,obj,event):
+        print(event.buttons())
+        if event.buttons() == Qt.RightButton:
+            self.widget.getViewBox().removeItem(obj)
 
     
     @Slot(str)
