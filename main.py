@@ -109,7 +109,7 @@ class VcPlot(QObject):
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
-        lengend=pg.LegendItem((80,60),offset=(70,20))
+        lengend=MyLegend((80,60),offset=(70,20))
         lengend.setParentItem(self.widget.graphicsItem())
         lengend.addItem(self.plot,self.name)
 
@@ -248,8 +248,10 @@ class MyLegend(pg.LegendItem):
     '''
     重写拖放事件
     '''
-    def __init__(self):
-        super().__init__()
+    def __init__(self, size=None, offset=None, horSpacing=25, verSpacing=0,
+                 pen=None, brush=None, labelTextColor=None, frame=True,
+                 labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
+        pg.LegendItem.__init__(self,**kwargs)
 
     def mouseDragEvent(self, ev):
         print('hi')
