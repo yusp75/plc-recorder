@@ -107,7 +107,13 @@ class VcPlot(QObject):
                 self.y[:-1]=self.y[1:]
             
     def mplot(self):
-        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=3,symbolBrush=('b'))
+        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
+        self.plot.sigClicked.connect(self.item_clicked)
+
+    def item_clicked(self,event):
+        print(event)
+        self.plot.clear()
+
     
     @Slot(str)
     def update_plot(self,msg):
@@ -248,6 +254,10 @@ class MyPlotWidget(pg.PlotWidget):
         self.addLegend()
         self.setAxisItems({'bottom': pg.DateAxisItem()})
         self.setMinimumHeight(self.widget_min_height) 
+        #不显示上下文菜单
+        self.setContextMenuActionVisible('Downsample',False)
+        self.setContextMenuActionVisible('Alpha',False)
+        self.setContextMenuActionVisible('Points',False)
 
     def dragMoveEvent(self, event):
         src=event.source()
@@ -267,7 +277,7 @@ class MyPlotWidget(pg.PlotWidget):
         source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
         name=source_item.item(0, 0).text()
         #发送放下信号
-        self.item_droped.emit({'name':name,'widget':self,'msg':'menu item droped'})
+        self.item_droped.emit({'name':name,'widget':self,'msg':'menu item %s droped'%name})
 
 
 # 主函数
@@ -277,6 +287,8 @@ class Main(uiclass, baseclass):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+
+        #pg.setConfigOption('leftButtonPan',False)
         # action Io       
         self.io = Io()
         self.action_io.triggered.connect(self.io.show)
@@ -436,6 +448,8 @@ class Main(uiclass, baseclass):
 
         if widget is None:
             widget=MyPlotWidget() 
+            #新建widget要放到layout上
+            self.layout.addWidget(widget)
             #新建实例，连接放下信号
             widget.item_droped.connect(self.my_plot)                 
 
@@ -448,8 +462,7 @@ class Main(uiclass, baseclass):
                     widget.setYRange(0,1,padding=0)                    
                 #标题：名称+地址
                 title=widget.windowTitle()
-                widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))                                
-                self.layout.addWidget(widget)
+                widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))
                 
                 #实例化
                 vc_plot=VcPlot(vc.name,vc.db_data.address,widget)               
