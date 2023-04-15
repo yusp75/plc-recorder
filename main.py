@@ -109,7 +109,7 @@ class VcPlot(QObject):
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
-        lengend=MyLegend((80,60),offset=(70,20))
+        lengend=MyLegend(offset=(70,20))
         lengend.setParentItem(self.widget.graphicsItem())
         lengend.addItem(self.plot,self.name)
 
@@ -119,10 +119,12 @@ class VcPlot(QObject):
     @Slot(object,object)
     def item_clicked(self,obj,event):
         print(event.button())
-
     
     @Slot(str)
     def update_plot(self,msg):
+        '''
+        更新plot数据
+        '''
         self.plot.setData(self.x,self.y)
     
     def get_plot(self):
@@ -133,10 +135,7 @@ class VcPlot(QObject):
         '''
         随机颜色r g b
         '''       
-        r = random.randint(0,255)
-        g = random.randint(0,255)
-        b = random.randint(0,255)
-        return (r,g,b)
+        return (random.randint(0,255),random.randint(0,255),random.randint(0,255))
 
 # 变量类 variable class
 class Vc(QObject):
@@ -253,9 +252,9 @@ class MyLegend(pg.LegendItem):
                  labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
         pg.LegendItem.__init__(self,**kwargs)
 
-    def mouseDragEvent(self, ev):
-        print('hi')
-        super().mouseDragEvent(ev)
+    def mouseDragEvent(self, event):
+        print(event.pos())
+        super().mouseDragEvent(event)
 
 
 class MyPlotWidget(pg.PlotWidget):
