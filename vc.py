@@ -1,0 +1,245 @@
+
+from PySide2.QtCore import (
+    QObject,
+    Qt,
+    Slot,
+    Signal,
+    QMutex,
+    QModelIndex,
+)
+
+from PySide2.QtGui import QDrag,QStandardItemModel
+from PySide2 import QtGui
+from snap7.types import Areas,WordLen
+from datetime import datetime
+from struct import unpack
+
+import random
+import snap7
+import time
+import util 
+import concurrent.futures
+import pyqtgraph as pg
+
+
+mutex=QMutex()
+
+
+class Vc(QObject):
+    '''
+    变量类 variable class
+    '''
+    data_readed=Signal(list)
+    
+    def __init__(self,client,db,db_data):
+        super().__init__()
+        self.name=db_data.name
+        self.client=client
+        self.db=db
+        self.db_data=db_data
+        self.xv=[]
+        self.yv=[]
+        self.enable=False
+        
+        self.data_type={
+        'bool':'B',
+        'word':'>h',
+        'int':'>i',
+        'real':'>f'
+        }
+        
+    # 响应 data_update 
+    @Slot(str)
+    def hi(self, m_str):
+        print('hi, %s-%s'%(self.name, m_str))
+        
+    def read_data(self):
+        '''
+        读数据
+        '''
+        #使用mutex保护client
+        mutex.lock() #锁上
+        data_b=None
+        try:
+            data_b=self.client.read_area(
+                self.db_data.areas,
+                self.db_data.number,
+                self.db_data.start,
+                self.db_data.size
+            )
+        except AttributeError:
+            print('line 119 at main, client is None')
+            return -1,-1
+        mutex.unlock() #开锁
+        #example
+        #rs=self.client.read_area(Areas.DB,128,0,1)
+        data_str='-1'
+        data_raw=''
+        data_value=0
+        data_value_str=''
+        try:
+            data_str=unpack(self.data_type[self.db_data.data_type], data_b)
+            if len(data_b)==1:
+                data_b=b'\x00'+data_b
+            data_raw=data_b.decode(encoding='utf_16_be')
+            data_value,data_value_str=self.cal_v(data_b,self.db_data)
+        except Exception as e:
+            print('Line 131 in main.py: ',str(e),self.db_data.address,data_b)
+        #print('%s: %s, cost %d.' % (self.db_data.address,data_b,self.client.get_exec_time()))
+        #print(self.db_data.address,self.db_data.areas,self.db_data.number,self.db_data.start,self.db_data.size,data_b,data_value)
+        
+        #写入数据库
+        self.db.save(
+            self.db_data.device,
+            self.db_data.name,
+            self.db_data.address,
+            self.db_data.bit_pos,
+            data_raw,
+            data_value_str,
+            self.db_data.data_type
+        )
+        # 返回x, y
+        return datetime.now().timestamp(), data_value  
+        
+    def read(self):
+        x,y=self.read_data()
+        #发射信号
+        self.data_readed.emit([x,y,self.db_data.address])
+        
+    # bytearray计算值
+    # q: bytearray, t: data type
+    def cal_v(self,q,db_data): 
+        xv=0
+        #bool
+        if db_data.data_type=='bool':  
+            #utf_16_be 将1字节编码为2字节
+            xv=1 if snap7.util.get_bool(q,1,db_data.bit_pos) else 0
+        #word
+        if db_data.data_type=='word':
+            xv=snap7.util.get_int(q,0)
+        #int
+        if db_data.data_type=='int':
+            xv=snap7.util.get_dint(q,0)
+        #real
+        if db_data.data_type=='real':
+            xv=snap7.util.get_real(q,0)
+        #print(db_data.data_type,xv)
+        return xv,str(xv)
+    
+    #启用/禁用    
+    def set_enable(self, flag):
+        self.enable=flag
+    
+    def get_enable(self):
+        return self.enable
+
+class MyLegend(pg.LegendItem):
+    '''
+    重写legend拖放事件
+    '''
+    def __init__(self, size=None, offset=None, horSpacing=25, verSpacing=0,
+                 pen=None, brush=None, labelTextColor=None, frame=True,
+                 labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
+        pg.LegendItem.__init__(self,**kwargs)
+
+    def mouseDragEvent(self, event):
+        print(event.pos())
+        super().mouseDragEvent(event)
+
+
+class MyPlotWidget(pg.PlotWidget):
+    '''
+    重写PlotWidget拖放事件
+    '''
+    #拖放信号
+    item_droped=Signal(dict)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.widget_min_height=160
+        self.setBackground('w') 
+        self.showGrid(x=True,y=True)
+        self.setAxisItems({'bottom': pg.DateAxisItem()})
+        self.setMinimumHeight(self.widget_min_height) 
+        #不显示上下文菜单
+        self.setContextMenuActionVisible('Downsample',False)
+        self.setContextMenuActionVisible('Alpha',False)
+        self.setContextMenuActionVisible('Points',False)
+
+    def dragMoveEvent(self, event):
+        src=event.source()
+        if src and src!=self:
+            event.setDropAction(Qt.MoveAction)
+
+    def dragEnterEvent(self, event):
+        #改指示
+        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        data = event.mimeData()
+        source_item = QStandardItemModel()
+        source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
+        name=source_item.item(0, 0).text()
+        #发送放下信号
+        self.item_droped.emit({'name':name,'widget':self,'msg':'menu item %s droped'%name})
+
+
+class VcPlot(QObject):
+    '''
+    变量类画图
+    '''
+    def __init__(self,name,address,widget):
+        #self.vid=vid
+        self.name=name
+        self.address=address
+        self.widget=widget
+        self.plot=None
+        self.pen = pg.mkPen(color=self.random_color(), width=1, style=Qt.SolidLine)
+        self.x=[]
+        self.y=[]
+        
+        self.mplot()
+    
+    @Slot(list) #x,y,addr
+    def move(self,data_list):
+        if self.address==data_list[2]: #地址相符的更新
+            self.x.append(data_list[0])
+            self.y.append(data_list[1])
+            if len(self.x)>1000:
+                self.x[:-1]=self.x[1:]
+                self.y[:-1]=self.y[1:]
+            
+    def mplot(self):
+        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
+        self.plot.curve.setClickable(True)
+        lengend=MyLegend(offset=(70,20))
+        lengend.setParentItem(self.widget.graphicsItem())
+        lengend.addItem(self.plot,self.name)
+
+        self.plot.sigClicked.connect(self.item_clicked)
+        self.widget.getViewBox().addItem(self.plot)        
+
+    @Slot(object,object)
+    def item_clicked(self,obj,event):
+        print(event.button())
+    
+    @Slot(str)
+    def update_plot(self,msg):
+        '''
+        更新plot数据
+        '''
+        self.plot.setData(self.x,self.y)
+    
+    def get_plot(self):
+        return (self.vid,self.plot)
+    
+    #随机颜色
+    def random_color(self): 
+        '''
+        随机颜色r g b
+        '''       
+        return (random.randint(0,255),random.randint(0,255),random.randint(0,255))
