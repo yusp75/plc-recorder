@@ -18,6 +18,9 @@ import random
 uiclass, baseclass = pg.Qt.loadUiType("curve.ui")
 
 class Curve(uiclass, baseclass):
+    '''
+    历史曲线
+    '''
     def __init__(self):
         super().__init__()
         self.setupUi(self)
