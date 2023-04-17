@@ -100,6 +100,29 @@ class Vc(QObject):
         )
         # 返回x, y
         return datetime.now().timestamp(), data_value  
+    
+    def batch_read(self):
+        '''
+        1次读取多个变量
+        class S7DataItem(ctypes.Structure):
+            _pack_ = 1
+            _fields_ = [
+                ('Area', ctypes.c_int32),
+                ('WordLen', ctypes.c_int32),
+                ('Result', ctypes.c_int32),
+                ('DBNumber', ctypes.c_int32),
+                ('Start', ctypes.c_int32),
+                ('Amount', ctypes.c_int32),
+                ('pData', ctypes.POINTER(ctypes.c_uint8))
+            ]       
+        read_multi_vars(self, items) -> Tuple[int, S7DataItem]
+        Reads different kind of variables from a PLC simultaneously.
+        Args:
+            items: list of items to be read.
+        Returns:
+            Tuple with the return code from the snap7 library and the list of items.        
+        '''
+        pass        
         
     def read(self):
         x,y=self.read_data()

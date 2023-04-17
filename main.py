@@ -163,33 +163,6 @@ class Main(uiclass, baseclass):
         self.worker_100ms.set_stop()
         self.worker_1s.set_stop() 
         self.pool.waitForDone(100)
-        
-
-        #for vc in self.vcs:
-        #    vc.data_readed.disconnect()
-    
-    # 1次读取多个变量
-    def batch_read(self):
-        '''
-        class S7DataItem(ctypes.Structure):
-            _pack_ = 1
-            _fields_ = [
-                ('Area', ctypes.c_int32),
-                ('WordLen', ctypes.c_int32),
-                ('Result', ctypes.c_int32),
-                ('DBNumber', ctypes.c_int32),
-                ('Start', ctypes.c_int32),
-                ('Amount', ctypes.c_int32),
-                ('pData', ctypes.POINTER(ctypes.c_uint8))
-            ]       
-        read_multi_vars(self, items) -> Tuple[int, S7DataItem]
-        Reads different kind of variables from a PLC simultaneously.
-        Args:
-            items: list of items to be read.
-        Returns:
-            Tuple with the return code from the snap7 library and the list of items.        
-        '''
-        pass    
     
     @Slot(list)
     def menu_dblclick(self, items):
