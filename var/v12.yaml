@@ -1,0 +1,10 @@
+unclamp:
+    a1: DB127.dbx0.7,bool,100ms
+    #t1: db127.dbw2,word,100ms
+    a2: db127.dbd4,int,20ms
+    a3: db127.dbd8,real,20ms
+    a4: i10.1,bool,10ms
+    #limit2: i10.2,10ms
+    a5: db128.dbx0.6,bool,1s
+
+
