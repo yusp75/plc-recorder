@@ -1,0 +1,16 @@
+CREATE TABLE vbt(
+   id_vb INTEGER PRIMARY KEY   NOT NULL,
+   name           TEXT          NOT NULL,
+   symbol         TEXT,
+   address        TEXT,
+   active         INTEGER,
+   type           CHAR(50)
+);
+
+CREATE TABLE data(
+   id_data INTEGER PRIMARY KEY   NOT NULL,      
+   value   REAL,
+   time    TEXT,
+   vbtlist  INTEGER,
+   FOREIGN KEY(vbtlist) REFERENCES vbt(id_vb)
+);
