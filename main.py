@@ -91,7 +91,7 @@ class Main(uiclass, baseclass):
         self.menu=Menu(self.tree)
 
         self.menu_items=[] #树形菜单项集
-        self.menu.item_changed.connect(self.menu_lclick)
+        self.menu.item_changed.connect(self.menu_click)
         #连接双击信号
         self.menu.item_dblclicked.connect(self.menu_dblclick)
         
@@ -164,13 +164,11 @@ class Main(uiclass, baseclass):
         self.worker_1s.set_stop() 
         self.pool.waitForDone(100)
     
-    @Slot(dict)
+    @Slot(list)
     def menu_click(self, items):
         '''
         树形菜单项目单击击
         '''
-        name=items['name']
-        checked=items['checked']
         
         self.fields=self.menu.get_menu_items()
         #修改变量类的状态
