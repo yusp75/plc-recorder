@@ -8,8 +8,12 @@ from PySide2.QtCore import (
     QModelIndex,
 )
 
-from PySide2.QtGui import QDrag,QStandardItemModel
+from PySide2.QtGui import (
+    QDrag,
+    QStandardItemModel,
+    QPainter)
 from PySide2 import QtGui
+
 from snap7.types import Areas,WordLen
 from datetime import datetime
 from struct import unpack
@@ -160,15 +164,25 @@ class MyLegend(pg.LegendItem):
     '''
     重写legend拖放事件
     '''
-    def __init__(self, size=None, offset=None, horSpacing=25, verSpacing=0,
+    def __init__(self, size=None, offset=None, horSpacing=25, verSpacing=6,
                  pen=None, brush=None, labelTextColor=None, frame=True,
                  labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
         pg.LegendItem.__init__(self,**kwargs)
 
     def mouseDragEvent(self, event):
-        print(event.pos())
+        pos=event.pos()
+        for item in self.items: 
+            #print(pos, item[1].geometry())           
+            if item[1].geometry().contains(pos):
+                print('in')
+            print(self.layout.geometry())
         super().mouseDragEvent(event)
 
+    def paintEvent(self, event):
+        p=QPainter(self)
+        p.setPen(self.pen)
+        p.setBrush(self.brush)
+        p.drawRect(self.items[0][1].geometry())
 
 class MyPlotWidget(pg.PlotWidget):
     '''
@@ -208,7 +222,7 @@ class MyPlotWidget(pg.PlotWidget):
         source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
         name=source_item.item(0, 0).text()
         #发送放下信号
-        self.item_droped.emit({'name':name,'widget':self,'msg':'menu item %s droped'%name})
+        self.item_droped.emit({'name':name,'widget':self,'msg':'drop'})
 
 
 class VcPlot(QObject):
@@ -221,7 +235,9 @@ class VcPlot(QObject):
         self.address=address
         self.widget=widget
         self.plot=None
-        self.pen = pg.mkPen(color=self.random_color(), width=1, style=Qt.SolidLine)
+        self.color=self.random_color()
+        self.pen=pg.mkPen(color=self.color, width=1, style=Qt.SolidLine)
+        self.brush=pg.mkBrush(255,0,0)
         self.x=[]
         self.y=[]
         
@@ -239,9 +255,20 @@ class VcPlot(QObject):
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
-        lengend=MyLegend(offset=(70,20))
-        lengend.setParentItem(self.widget.graphicsItem())
-        lengend.addItem(self.plot,self.name)
+        
+        plotItem=self.widget.getPlotItem()      
+        pen=pg.mkPen(255,0,0)
+        brush=pg.mkBrush(0,255,0)
+        legend=MyLegend(pen=pen,brush=brush,frame=True)
+        if plotItem.legend is None:
+            plotItem.legend=legend
+            legend.addItem(self.plot,self.name)
+            #legend.setParentItem(self.widget.graphicsItem()) 
+            legend.setParentItem(plotItem)
+
+        elif len(plotItem.legend.items)>=1:
+            plotItem.legend.removeItem(self.name)
+            plotItem.legend.addItem(self.plot,self.name)
 
         self.plot.sigClicked.connect(self.item_clicked)
         self.widget.getViewBox().addItem(self.plot)        

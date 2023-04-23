@@ -91,9 +91,9 @@ class Main(uiclass, baseclass):
         self.menu=Menu(self.tree)
 
         self.menu_items=[] #树形菜单项集
-        self.menu.item_changed.connect(self.menu_dblclick)
+        self.menu.item_changed.connect(self.menu_lclick)
         #连接双击信号
-        self.menu.item_dblclicked.connect(self.menu_dblclick2)
+        self.menu.item_dblclicked.connect(self.menu_dblclick)
         
         self.fields=[]
         
@@ -164,11 +164,14 @@ class Main(uiclass, baseclass):
         self.worker_1s.set_stop() 
         self.pool.waitForDone(100)
     
-    @Slot(list)
-    def menu_dblclick(self, items):
+    @Slot(dict)
+    def menu_click(self, items):
         '''
-        树形菜单项目双击
+        树形菜单项目单击击
         '''
+        name=items['name']
+        checked=items['checked']
+        
         self.fields=self.menu.get_menu_items()
         #修改变量类的状态
         for v in self.vcs:
@@ -178,12 +181,12 @@ class Main(uiclass, baseclass):
                 v.set_enable(False)   
     
     @Slot(str)
-    def menu_dblclick2(self, item):
+    def menu_dblclick(self, item):
         '''
         树形菜单双击
         '''
         #新建plotwidget
-        self.my_plot({'name':item,'widget':None,'msg':'menu double click'})
+        self.my_plot({'name':item,'widget':None,'msg':'new'})
         
     @Slot(dict)
     def my_plot(self, param):
@@ -194,6 +197,7 @@ class Main(uiclass, baseclass):
 
         name=param['name']
         widget=param['widget']
+        msg=param['msg']
         print(param['msg'])
 
         if widget is None:
@@ -201,12 +205,17 @@ class Main(uiclass, baseclass):
             #新建widget要放到layout上
             self.layout.addWidget(widget)
             #新建实例，连接放下信号
-            widget.item_droped.connect(self.my_plot)                 
+            widget.item_droped.connect(self.my_plot) 
+
+        #检测是否已在plot队列
+        for vc in self.queue_plot:
+            if vc.name==name and msg=='drop':
+                print('droped but existed, skip:'+name)
+                return               
 
         for vc in self.vcs:
-            if vc.name==name:
-                vc.enable=True                
-                
+            if vc.name==name:                    
+                #vc.enable=True
                 #布尔y设置0-1，其他格数设置为1
                 if vc.db_data.data_type=='bool':
                     widget.setYRange(0,1,padding=0)                    

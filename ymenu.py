@@ -12,7 +12,7 @@ class Menu(QObject):
     item_changed=Signal(list)
     item_dblclicked=Signal(str)
     
-    def __init__(self, tree_widget):
+    def __init__(self,tree_widget,checkable=True):
         super().__init__()
         self.model=QStandardItemModel()
         self.model.setHorizontalHeaderLabels(['name','address',])        
@@ -21,7 +21,9 @@ class Menu(QObject):
         
         self.tree=tree_widget
         self.tree.setModel(self.model)
-        self.tree.doubleClicked.connect(self.tree_clicked)  #信号待更换
+
+        self.tree.clicked.connect(self.tree_clicked)
+        self.tree.doubleClicked.connect(self.tree_dblclicked)  #信号待更换
         
         self.menu_items=[] #菜单项集        
         
@@ -30,22 +32,38 @@ class Menu(QObject):
         for d in dbs:
             item=QStandardItem(d.name)
             item2=QStandardItem(d.address)
-            item.setCheckable(False)
+            item.setCheckable(checkable)
             
             root.appendRow([item,item2])
         self.tree.expandAll()
         
     def tree_clicked(self,model_index):
         '''
-        菜单树点击
+        菜单项选中
         '''
         row=model_index.row()
-        #col=item.col()
+        item=self.model.item(row)
+        checked=item.checkState()
+        for v in self.menu_items:
+            if v==item.text():
+                self.menu_items.remove(v)
+                break
+            self.menu_items.append(item.text())
+
+
+        self.item_changed.emit(self.menu_items)
+
+    def tree_dblclicked(self,model_index):
+        '''
+        菜单树双击
+        '''
+        row=model_index.row()
         item=self.model.item(row)
         if item.text() not in self.menu_items:
             self.menu_items.append(item.text())
         
         #print(self.menu_items)
+        print(item)
         self.item_changed.emit(self.menu_items)
         self.item_dblclicked.emit(item.text())
         

@@ -37,6 +37,7 @@ class Curve(uiclass, baseclass):
         self.menu=Menu(self.tree)
         self.menu.item_changed.connect(self.menu_click)
         self.fields=[]
+
     
     #设置查询起始时间
     def time_now(self):            
@@ -51,6 +52,9 @@ class Curve(uiclass, baseclass):
         b=random.randint(0,255)
         return (r,g,b)
     
+
+
+
     #绘画
     def plot(self,x,y,ymin,ymax):
         self.widget.setTitle('Curve')
