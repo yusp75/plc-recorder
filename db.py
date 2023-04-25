@@ -65,7 +65,7 @@ class Db:
             #print(q.name, q.values,q.times)
             names.append(q.name)
             #data.append({q.name:(q.times,q.values),'dtype':q.data_type})
-            data.append({'nm':q.name,'tm':q.times,'v':q.values,'t':q.tata_type})
+            data.append({'nm':q.name,'tm':q.times,'v':q.values,'t':q.data_type})
         #view sql
         #print(qs)
         return set(names),data
