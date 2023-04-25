@@ -10,7 +10,7 @@ class Menu(QObject):
     '''
     #信号定义
     item_changed=Signal(list)
-    item_dblclicked=Signal(str)
+    item_dblclicked=Signal(dict)
     
     def __init__(self,tree_widget,checkable=True):
         super().__init__()
@@ -44,13 +44,15 @@ class Menu(QObject):
         row=model_index.row()
         item=self.model.item(row)
         checked=item.checkState()
-        for v in self.menu_items:
-            if v==item.text():
-                self.menu_items.remove(v)
-                break
-            self.menu_items.append(item.text())
+        #增减
+        if checked:
+            if item.text() not in self.menu_items:
+                self.menu_items.append(item.text())
+        else:
+            if item.text() in self.menu_items:
+                    self.menu_items.remove(item.text())                    
 
-
+        print('menu 单击',self.menu_items)
         self.item_changed.emit(self.menu_items)
 
     def tree_dblclicked(self,model_index):
@@ -59,13 +61,14 @@ class Menu(QObject):
         '''
         row=model_index.row()
         item=self.model.item(row)
+        item2=self.model.item(row,1)
         if item.text() not in self.menu_items:
             self.menu_items.append(item.text())
         
         #print(self.menu_items)
-        print(item)
-        self.item_changed.emit(self.menu_items)
-        self.item_dblclicked.emit(item.text())
+        print('menu 双击',item2.text())
+        #self.item_changed.emit(self.menu_items)
+        self.item_dblclicked.emit({'name':item.text(),'addr':item2.text()})
         
     # 扫描var目录
     def read_var(self):        
