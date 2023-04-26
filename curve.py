@@ -59,18 +59,6 @@ class Curve(uiclass, baseclass):
         b=random.randint(0,255)
         return (r,g,b)
     
-
-    #绘画
-    def plot(self,x,y,ymin,ymax):
-        self.widget.setTitle('Curve')
-        self.widget.addLegend()
-        self.widget.showGrid(x=True,y=True) 
-        self.widget.setYRange(ymin,ymax,padding=0)
-        self.widget.setAxisItems({'bottom': pg.DateAxisItem()})
-        
-        pen_color=self.random_color()
-        pen = pg.mkPen(color=pen_color, width=1, style=Qt.SolidLine)
-        self.widget.plot(x, y, pen=pen, symbol='+', symbolSize=3, symbolBrush=('b'))
     
     #查询数据    
     def query_data(self):
@@ -94,13 +82,13 @@ class Curve(uiclass, baseclass):
             dtype=d['t']
 
             #更新数据到plot
-            for plot in self.queue_plot:
-                if d['nm']==plot.name:
-                    plot.x=d['tm']
-                    plot.y=d['v']
-                    plot.plot.setdata(x,y)
+            for p in self.queue_plot:
+                if d['nm']==p.name:
+                    p.plot.setData(d['tm'],d['v'])
+                    p.x=d['tm']
+                    p.y=d['v']
 
-        self.emit(plot_update)
+        #self.plot_update.emit('update')
             
     
     @Slot(list)
@@ -109,8 +97,7 @@ class Curve(uiclass, baseclass):
         菜单项选中
         '''
         #print('curve:',items)
-        self.fields=self.menu.get_menu_items()
-        
+        self.fields=self.menu.get_menu_items()        
     
 
     @Slot(dict)

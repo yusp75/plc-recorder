@@ -137,6 +137,15 @@
       <property name="editTriggers">
        <set>QAbstractItemView::SelectedClicked</set>
       </property>
+      <property name="dragEnabled">
+       <bool>true</bool>
+      </property>
+      <property name="dragDropMode">
+       <enum>QAbstractItemView::DragOnly</enum>
+      </property>
+      <property name="defaultDropAction">
+       <enum>Qt::CopyAction</enum>
+      </property>
      </widget>
      <widget class="QScrollArea" name="scroll">
       <property name="geometry">
