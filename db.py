@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from itertools import groupby
 import snap7
 
-db = SqliteDatabase('yu.db')
+db = SqliteDatabase('yu.db',pragmas={'journal_mode': 'wal','cache_size': -1024 * 128})
 
 class Data(Model):
     device=CharField() #0

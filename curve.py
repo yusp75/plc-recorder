@@ -74,6 +74,7 @@ class Curve(uiclass, baseclass):
             return
 
         names,data=m_db.query(dt1,dt2,self.fields)
+        m_db.close()
         #print(data)
         for d in data:
             lv=d['v']            
@@ -155,7 +156,7 @@ class Curve(uiclass, baseclass):
         #新建plotwidget
         name=item['name']
         addr=item['addr']
-        self.my_plot({'name':name, 'addr':addr,'widget':None,'msg':'new'})     
+        self.my_plot({'name':name,'addr':addr,'widget':None,'msg':'new'})     
                
   
 if __name__ == '__main__':
