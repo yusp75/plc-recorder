@@ -42,7 +42,6 @@ class Curve(uiclass, baseclass):
         self.menu.item_dblclicked.connect(self.menu_dblclick)
         self.fields=[] #字段
 
-        self.queue_plot=[]
         self.vcs=[]
 
     
@@ -122,7 +121,7 @@ class Curve(uiclass, baseclass):
             widget.item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
-        for plot in self.queue_plot:
+        for plot in widget.queue_plot:
             if plot.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
                 return               
@@ -143,7 +142,7 @@ class Curve(uiclass, baseclass):
         #更新
         self.plot_update.connect(vc_plot.update_plot)              
         #绘画队列
-        self.queue_plot.append(vc_plot)
+        widget.queue_plot.append(vc_plot)
               
                 #退出循环
         #        break

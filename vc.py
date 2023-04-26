@@ -203,6 +203,8 @@ class MyPlotWidget(pg.PlotWidget):
         self.setContextMenuActionVisible('Downsample',False)
         self.setContextMenuActionVisible('Alpha',False)
         self.setContextMenuActionVisible('Points',False)
+        #记录新建、拖放的曲线
+        self.queue_plot=[]
 
     def dragMoveEvent(self, event):
         src=event.source()

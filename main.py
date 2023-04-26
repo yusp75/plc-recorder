@@ -52,7 +52,7 @@ class MyWorker(QRunnable):
                     self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             
-            QThread.msleep(self.delay)
+            QThread.msleep(self.delay*10)
     
     # 设置运行标志
     def set_stop(self):
@@ -61,7 +61,8 @@ class MyWorker(QRunnable):
 
 # 主函数
 class Main(uiclass, baseclass):
-    plot_update=Signal(str)
+    plot_update=Signal(str) #信号：更新图形
+    app_exited=Signal(bool) #信号：程序退出
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -113,7 +114,6 @@ class Main(uiclass, baseclass):
             '1s':self.queue_1s,
         }
         self.queue_vc=[] #读数队列
-        self.queue_plot=[] #绘图队列
         
         # 实例化
         self.worker_10ms=MyWorker('10ms',self.queue_10ms,10)
@@ -163,6 +163,8 @@ class Main(uiclass, baseclass):
         self.worker_50ms.set_stop()
         self.worker_100ms.set_stop()
         self.worker_1s.set_stop() 
+
+        self.app_exited.emit(True)
         self.pool.waitForDone(100)
     
     @Slot(list)
@@ -213,7 +215,7 @@ class Main(uiclass, baseclass):
             widget.item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
-        for vc in self.queue_plot:
+        for vc in widget.queue_plot:
             if vc.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
                 return               
@@ -237,7 +239,7 @@ class Main(uiclass, baseclass):
                 #读数
                 vc.data_readed.connect(vc_plot.move)
                 #绘画队列
-                self.queue_plot.append(vc_plot)
+                widget.queue_plot.append(vc_plot)
 
                 #退出循环
                 break
