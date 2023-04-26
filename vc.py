@@ -221,8 +221,10 @@ class MyPlotWidget(pg.PlotWidget):
         source_item = QStandardItemModel()
         source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
         name=source_item.item(0, 0).text()
+        addr=source_item.item(0, 1).text()
+        #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
         #发送放下信号
-        self.item_droped.emit({'name':name,'widget':self,'msg':'drop'})
+        self.item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
 
 
 class VcPlot(QObject):
@@ -282,6 +284,7 @@ class VcPlot(QObject):
         '''
         更新plot数据
         '''
+        #print('come from %s'%msg)
         self.plot.setData(self.x,self.y)
     
     def get_plot(self):
