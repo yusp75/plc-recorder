@@ -36,7 +36,7 @@ class Menu(QObject):
             
             root.appendRow([item,item2])
         self.tree.expandAll()
-        
+   
     def tree_clicked(self,model_index):
         '''
         菜单项选中
@@ -52,7 +52,7 @@ class Menu(QObject):
             if item.text() in self.menu_items:
                     self.menu_items.remove(item.text())                    
 
-        print('menu 单击',self.menu_items)
+        #print('menu 单击',self.menu_items)
         self.item_changed.emit(self.menu_items)
 
     def tree_dblclicked(self,model_index):
@@ -65,8 +65,7 @@ class Menu(QObject):
         if item.text() not in self.menu_items:
             self.menu_items.append(item.text())
         
-        #print(self.menu_items)
-        print('menu 双击',item2.text())
+        #print('menu 双击',item2.text())
         #self.item_changed.emit(self.menu_items)
         self.item_dblclicked.emit({'name':item.text(),'addr':item2.text()})
         
