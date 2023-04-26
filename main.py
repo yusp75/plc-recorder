@@ -45,9 +45,11 @@ class MyWorker(QRunnable):
                 
             if not self.queue.empty():
                 q=self.queue.get() #取1个值
-                if q is not None and q.enable: # 激活
+                if q is not None: # 激活
                     q.read()
-                self.queue.put(q)
+                #若变量失活则不放入队列循环
+                if q.enable:
+                    self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             
             QThread.msleep(self.delay)
@@ -55,7 +57,6 @@ class MyWorker(QRunnable):
     # 设置运行标志
     def set_stop(self):
         self.running=False
-
 
 
 # 主函数
@@ -167,24 +168,30 @@ class Main(uiclass, baseclass):
     @Slot(list)
     def menu_click(self, items):
         '''
-        树形菜单项目单击击
-        '''
-        
+        树形菜单项目单击
+        '''        
         self.fields=self.menu.get_menu_items()
         #修改变量类的状态
         for v in self.vcs:
             if v.name in self.fields:
                 v.set_enable(True)
+                #数据读取队列               
+                if v.name not in self.queue_vc: 
+                    self.queues[v.db_data.delay].put(v)
+                    self.queue_vc.append(v.name)
             else:
-                v.set_enable(False)   
+                v.set_enable(False)
+                if v.name in self.queue_vc: 
+                    #读值队列中移除v，在移动队列时进行
+                    self.queue_vc.remove(v.name)  
     
-    @Slot(str)
+    @Slot(dict)
     def menu_dblclick(self, item):
         '''
         树形菜单双击
         '''
-        #新建plotwidget
-        self.my_plot({'name':item,'widget':None,'msg':'new'})
+        #新建plotwidget        
+        self.my_plot({'name':item['name'],'widget':None,'msg':'new'})
         
     @Slot(dict)
     def my_plot(self, param):
@@ -219,6 +226,7 @@ class Main(uiclass, baseclass):
                     widget.setYRange(0,1,padding=0)                    
                 #标题：名称+地址
                 title=widget.windowTitle()
+                print('title',title)
                 widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))
                 
                 #实例化
@@ -230,12 +238,6 @@ class Main(uiclass, baseclass):
                 vc.data_readed.connect(vc_plot.move)
                 #绘画队列
                 self.queue_plot.append(vc_plot)
-                #数据读取队列               
-                if vc.name not in self.queue_vc: 
-                    self.queues[vc.db_data.delay].put(vc)
-                    self.queue_vc.append(vc.name)
-                else:
-                    print('vc is already in read queue, skip.')
 
                 #退出循环
                 break
