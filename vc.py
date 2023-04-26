@@ -33,7 +33,7 @@ class Vc(QObject):
     '''
     变量类 variable class
     '''
-    data_readed=Signal(list)
+    data_readed=Signal(dict)
     
     def __init__(self,client,db,db_data):
         super().__init__()
@@ -131,7 +131,7 @@ class Vc(QObject):
     def read(self):
         x,y=self.read_data()
         #发射信号
-        self.data_readed.emit([x,y,self.db_data.address])
+        self.data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
         
     # bytearray计算值
     # q: bytearray, t: data type
@@ -175,7 +175,7 @@ class MyLegend(pg.LegendItem):
             #print(pos, item[1].geometry())           
             if item[1].geometry().contains(pos):
                 print('in')
-            print(self.layout.geometry())
+            #print(self.layout.geometry())
         super().mouseDragEvent(event)
 
     def paintEvent(self, event):
@@ -243,14 +243,14 @@ class VcPlot(QObject):
         
         self.mplot()
     
-    @Slot(list) #x,y,addr
-    def move(self,data_list):
-        if self.address==data_list[2]: #地址相符的更新
-            self.x.append(data_list[0])
-            self.y.append(data_list[1])
+    @Slot(dict) #x,y,addr
+    def move(self,data):
+        if self.address==data['addr']: #地址相符的更新
             if len(self.x)>1000:
                 self.x[:-1]=self.x[1:]
                 self.y[:-1]=self.y[1:]
+            self.x.append(data['x'])
+            self.y.append(data['y'])            
             
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
