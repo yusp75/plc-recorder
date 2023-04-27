@@ -69,14 +69,19 @@ class Main(uiclass, baseclass):
         self.setupUi(self)
 
         #pg.setConfigOption('leftButtonPan',False)
-        # action Io       
+        # 动作
+        # action: Io variable      
         self.io = Io()
         self.action_io.triggered.connect(self.io.show)
         self.dbs=self.io.list_var
         self.client=self.io.client
-        # action Curve
+        # action: history curve
         self.curve=Curve()
         self.action_his.triggered.connect(self.curve.show)
+        # action: start
+        self.action_start.triggered.connect(self.start)
+        # action: stop
+        self.action_stop.triggered.connect(self.stop)
 
         # 线程池
         self.pool=QThreadPool.globalInstance()        
@@ -121,12 +126,7 @@ class Main(uiclass, baseclass):
         self.worker_50ms=MyWorker('50ms',self.queue_50ms,50)
         self.worker_100ms=MyWorker('100ms',self.queue_100ms,100)
         self.worker_1s=MyWorker('1s',self.queue_1s,1000)
-        # 启动
-        self.pool.start(self.worker_10ms)
-        self.pool.start(self.worker_20ms)
-        self.pool.start(self.worker_50ms)
-        self.pool.start(self.worker_100ms)
-        self.pool.start(self.worker_1s)
+        
 
         # 变量列表
         self.vcs=[]
@@ -140,13 +140,21 @@ class Main(uiclass, baseclass):
 
     def start(self):
         '''
-        启动定时器
+        启动
         '''
+        # 启动更新画面的定时器
         self.timer.start()
+
+        # 启动线程
+        self.pool.start(self.worker_10ms)
+        self.pool.start(self.worker_20ms)
+        self.pool.start(self.worker_50ms)
+        self.pool.start(self.worker_100ms)
+        self.pool.start(self.worker_1s)
     
     def closeEvent(self, event):
         '''
-        #重写关闭事件
+        重写关闭事件
         '''
         self.stop()
         print("main window is closed.")
@@ -165,7 +173,7 @@ class Main(uiclass, baseclass):
         self.worker_1s.set_stop() 
 
         self.app_exited.emit(True)
-        self.pool.waitForDone(100)
+        #self.pool.waitForDone(100)
     
     @Slot(list)
     def menu_click(self, items):
@@ -249,6 +257,5 @@ if __name__ == '__main__':
     # 主窗体
     main = Main()
     main.show()
-    main.start()
 
     sys.exit(app.exec_())
