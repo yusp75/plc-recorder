@@ -53,7 +53,7 @@ class Db:
             .python_value(convert_time))
         #分组查询     
         qs=(Data
-        .select(Data.name,Data.data_type,data_value.alias('values'),data_time.alias('times'))
+        .select(Data.name,Data.addr,Data.data_type,data_value.alias('values'),data_time.alias('times'))
         .where((Data.name.in_(fields)) & (Data.time.between(dt1,dt2)))
         .group_by(Data.name)
         .order_by(Data.time))
@@ -64,8 +64,13 @@ class Db:
         for q in qs:
             #print(q.name, q.values,q.times)
             names.append(q.name)
-            #data.append({q.name:(q.times,q.values),'dtype':q.data_type})
-            data.append({'nm':q.name,'tm':q.times,'v':q.values,'t':q.data_type})
+            data.append({
+                'nm':q.name,
+                'addr':q.addr,
+                'tm':q.times,
+                'v':q.values,
+                't':q.data_type
+                })
         #view sql
         #print(qs)
         return set(names),data
