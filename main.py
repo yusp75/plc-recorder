@@ -37,11 +37,12 @@ class MyWorker(QRunnable):
         self.queue=queue
         self.delay=delay
         self.running=True
+        self.pause=False
 
     def run(self):
-        while True:
-            if not self.running:
-                return
+        while self.running:
+            if self.pause:
+                continue
                 
             if not self.queue.empty():
                 q=self.queue.get() #取1个值
@@ -52,11 +53,14 @@ class MyWorker(QRunnable):
                     self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             
-            QThread.msleep(self.delay*10)
+            QThread.msleep(self.delay)
     
     # 设置运行标志
-    def set_stop(self):
-        self.running=False
+    def set_running(self, flag):
+        self.running=flag
+    # 设置停止标志
+    def set_pause(self,flag):
+        self.puase=flag
 
 
 # 主函数
@@ -119,14 +123,20 @@ class Main(uiclass, baseclass):
             '1s':self.queue_1s,
         }
         self.queue_vc=[] #读数队列
-        
-        # 实例化
+
+        # 实例化线程
         self.worker_10ms=MyWorker('10ms',self.queue_10ms,10)
         self.worker_20ms=MyWorker('20ms',self.queue_20ms,20)
         self.worker_50ms=MyWorker('50ms',self.queue_50ms,50)
         self.worker_100ms=MyWorker('100ms',self.queue_100ms,100)
         self.worker_1s=MyWorker('1s',self.queue_1s,1000)
-        
+
+        # 启动线程
+        self.pool.start(self.worker_10ms)
+        self.pool.start(self.worker_20ms)
+        self.pool.start(self.worker_50ms)
+        self.pool.start(self.worker_100ms)
+        self.pool.start(self.worker_1s)
 
         # 变量列表
         self.vcs=[]
@@ -141,22 +151,37 @@ class Main(uiclass, baseclass):
     def start(self):
         '''
         启动
-        '''
+        '''    
+
         # 启动更新画面的定时器
         self.timer.start()
 
-        # 启动线程
-        self.pool.start(self.worker_10ms)
-        self.pool.start(self.worker_20ms)
-        self.pool.start(self.worker_50ms)
-        self.pool.start(self.worker_100ms)
-        self.pool.start(self.worker_1s)
+        #self.worker_10ms.set_running(True)
+        #self.worker_20ms.set_running(True)
+        #self.worker_50ms.set_running(True)
+        #self.worker_100ms.set_running(True)
+        #self.worker_1s.set_running(True)
+
+        self.worker_10ms.set_pause(False)
+        self.worker_20ms.set_pause(False)
+        self.worker_50ms.set_pause(False)
+        self.worker_100ms.set_pause(False)
+        self.worker_1s.set_pause(False)
+
     
     def closeEvent(self, event):
         '''
         重写关闭事件
-        '''
+        '''        
         self.stop()
+        self.worker_10ms.set_running(False)
+        self.worker_20ms.set_running(False)
+        self.worker_50ms.set_running(False)
+        self.worker_100ms.set_running(False)
+        self.worker_1s.set_running(False)
+
+        self.app_exited.emit(True)
+        self.pool.waitForDone(100)
         print("main window is closed.")
         event.accept()        
                 
@@ -166,14 +191,11 @@ class Main(uiclass, baseclass):
         '''
         self.timer.stop()          
         
-        self.worker_10ms.set_stop()
-        self.worker_20ms.set_stop()
-        self.worker_50ms.set_stop()
-        self.worker_100ms.set_stop()
-        self.worker_1s.set_stop() 
-
-        self.app_exited.emit(True)
-        #self.pool.waitForDone(100)
+        self.worker_10ms.set_pause(True)
+        self.worker_20ms.set_pause(True)
+        self.worker_50ms.set_pause(True)
+        self.worker_100ms.set_pause(True)
+        self.worker_1s.set_pause(True) 
     
     @Slot(list)
     def menu_click(self, items):

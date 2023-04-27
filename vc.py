@@ -131,7 +131,10 @@ class Vc(QObject):
     def read(self):
         x,y=self.read_data()
         #发射信号
-        self.data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
+        try:
+            self.data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
+        except RuntimeError:
+            print('vc read runtime error')
         
     # bytearray计算值
     # q: bytearray, t: data type
