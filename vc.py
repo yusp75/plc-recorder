@@ -291,6 +291,14 @@ class VcPlot(QObject):
         '''
         #print('come from %s'%msg)
         self.plot.setData(self.x,self.y)
+
+    @Slot(dict)
+    def update_plot_xy(self,data):
+        addr=data['addr']
+        if self.address==addr:
+            self.x=data['x']
+            self.y=data['y']
+            self.plot.setData(self.x,self.y)
     
     def get_plot(self):
         return (self.vid,self.plot)

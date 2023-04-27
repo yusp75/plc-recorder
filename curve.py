@@ -22,7 +22,7 @@ class Curve(uiclass, baseclass):
     '''
     历史曲线
     '''
-    plot_update=Signal(str)
+    plot_update=Signal(dict) #有别于main的信号
 
     def __init__(self):
         super().__init__()
@@ -76,20 +76,8 @@ class Curve(uiclass, baseclass):
         m_db.close()
         #print(data)
         for d in data:
-            lv=d['v']            
-            mn=min(lv)
-            mx=max(lv)
-            dtype=d['t']
-
-            #更新数据到plot
-            for p in self.queue_plot:
-                if d['nm']==p.name:
-                    p.plot.setData(d['tm'],d['v'])
-                    p.x=d['tm']
-                    p.y=d['v']
-
-        #self.plot_update.emit('update')
-            
+            #更新plot数据
+            self.plot_update.emit({'addr':d['addr'],'x':d['tm'],'y':d['v']}) 
     
     @Slot(list)
     def menu_click(self, items):
@@ -140,7 +128,7 @@ class Curve(uiclass, baseclass):
         vc_plot=VcPlot(name,address,widget)               
         #信号连接
         #更新
-        self.plot_update.connect(vc_plot.update_plot)              
+        self.plot_update.connect(vc_plot.update_plot_xy)              
         #绘画队列
         widget.queue_plot.append(vc_plot)
               
