@@ -200,7 +200,7 @@ class MyPlotWidget(pg.PlotWidget):
         self.widget_min_height=160
         self.setBackground('w') 
         self.showGrid(x=True,y=True)
-        #self.setAxisItems({'bottom': pg.DateAxisItem()})
+        self.setAxisItems({'bottom': pg.DateAxisItem()})
         self.setMinimumHeight(self.widget_min_height) 
         #不显示上下文菜单
         self.setContextMenuActionVisible('Downsample',False)
@@ -209,9 +209,9 @@ class MyPlotWidget(pg.PlotWidget):
         #记录新建、拖放的曲线
         self.queue_plot=[]
 
-        axis_x=pg.DateAxisItem()
-        axis_x.setTickSpacing(5,1)
-        self.setAxisItems({'bottom':axis_x})
+        axis_y=pg.AxisItem(orientation='left')
+        axis_y.setTickSpacing(0.5,1)
+        self.setAxisItems({'left':axis_y})
 
     def dragMoveEvent(self, event):
         src=event.source()
@@ -265,6 +265,7 @@ class VcPlot(QObject):
             
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
+        self.plot.setDownsampling(auto=True)
         self.plot.curve.setClickable(True)
         
         plotItem=self.widget.getPlotItem()      
