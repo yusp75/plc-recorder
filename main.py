@@ -272,13 +272,15 @@ class Main(uiclass, baseclass):
                 widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))
                 
                 #实例化
-                vc_plot=VcPlot(vc.name,vc.db_data.address,widget) 
+                vc_plot=VcPlot(vc.name,vc.db_data.address,widget,vc.db_data.delay,vc.db_data.data_type) 
                 vc_plot.set_xrange(self.time_range.currentText())              
                 #信号连接
                 #更新
                 self.plot_update.connect(vc_plot.update_plot)
-                #改时间范围
+                #改plot时间范围
                 self.time_range.currentTextChanged.connect(vc_plot.set_xrange)
+                #鼠标悬停更新窗口右上角xy
+                vc_plot.sig_data_xy.connect(self.update_label_xy)
                 #读数
                 vc.data_readed.connect(vc_plot.move)
                 #绘画队列
@@ -286,6 +288,13 @@ class Main(uiclass, baseclass):
 
                 #退出循环
                 break
+    @Slot(str,str)
+    def update_label_xy(self,tm,v):
+        '''
+        显示鼠标悬停处xy
+        '''
+        self.value_x.setText(tm)
+        self.value_y.setText(v)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

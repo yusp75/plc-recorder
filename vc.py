@@ -240,10 +240,14 @@ class VcPlot(QObject):
     '''
     变量类画图
     '''
-    def __init__(self,name,address,widget):
-        #self.vid=vid
+    sig_data_xy=Signal(str,str) #鼠标位置的点
+
+    def __init__(self,name,address,widget,delay,data_type):
+        super().__init__()
         self.name=name
         self.address=address
+        self.delay=delay
+        self.data_type=data_type
         self.widget=widget
         self.plot=None
         self.color=self.random_color()
@@ -251,7 +255,17 @@ class VcPlot(QObject):
         self.brush=pg.mkBrush(255,0,0)
         self.x=[]
         self.y=[]
+        self.ds=1
         
+        if self.delay in ['10ms','20ms','50ms','100ms']:
+            factor=int(self.delay[:-2])
+            self.ds=1000/(factor*2) # 1秒2个值
+
+        #游丝
+        self.vLine = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine = pg.InfiniteLine(angle=0, movable=False)
+
+        #call plot
         self.mplot()
     
     @Slot(dict) #x,y,addr
@@ -265,8 +279,12 @@ class VcPlot(QObject):
             
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
-        self.plot.setDownsampling(auto=True)
         self.plot.curve.setClickable(True)
+
+        #游丝
+        self.widget.addItem(self.vLine, ignoreBounds=True)
+        self.widget.addItem(self.hLine, ignoreBounds=True)        
+        self.widget.getPlotItem().scene().sigMouseMoved.connect(self.mouseMoved)
         
         plotItem=self.widget.getPlotItem()      
         pen=pg.mkPen(255,0,0)
@@ -274,8 +292,7 @@ class VcPlot(QObject):
         legend=MyLegend(pen=pen,brush=brush,frame=True)
         if plotItem.legend is None:
             plotItem.legend=legend
-            legend.addItem(self.plot,self.name)
-            #legend.setParentItem(self.widget.graphicsItem()) 
+            legend.addItem(self.plot,self.name) 
             legend.setParentItem(plotItem)
 
         elif len(plotItem.legend.items)>=1:
@@ -294,7 +311,9 @@ class VcPlot(QObject):
         '''
         更新plot数据
         '''
-        #print('come from %s'%msg)        
+        #print('come from %s'%msg)
+        self.plot.setDownsampling(ds=self.ds,auto=True,method='peak')
+        self.plot.setClipToView(True)        
         self.plot.setData(self.x,self.y)
 
     @Slot(dict)
@@ -329,3 +348,31 @@ class VcPlot(QObject):
         dt2=datetime.datetime.now()
         dt1=dt2+datetime.timedelta(seconds=-1*seconds[range])
         self.widget.setXRange(dt1.timestamp(),dt2.timestamp())
+
+
+    def mouseMoved(self,event):
+        '''
+        p1 = win.addPlot(row=1, col=0)
+        <class 'pyqtgraph.graphicsItems.PlotItem.PlotItem.PlotItem'>
+        p2 = pg.plot()
+        <class 'pyqtgraph.graphicsItems.PlotDataItem.PlotDataItem'>
+
+        p1!=p2
+        '''
+        p=self.widget.getPlotItem()
+        vb=p.vb
+        mousePoint = vb.mapSceneToView(event)
+        if p.sceneBoundingRect().contains(event):            
+            mousePoint = vb.mapSceneToView(event)
+            index = int(mousePoint.x())
+            
+            xv=datetime.datetime.fromtimestamp(index).strftime('%H:%M:%S')
+              
+            for i,x in enumerate(self.x):
+                if int(x)==index:
+                    #print(self.y[i])
+                    self.sig_data_xy.emit(xv,str(self.y[i])) #emit
+                    break
+
+            self.vLine.setPos(mousePoint.x())
+            self.hLine.setPos(mousePoint.y())
