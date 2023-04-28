@@ -17,10 +17,10 @@
    <widget class="QListWidget" name="message">
     <property name="geometry">
      <rect>
-      <x>11</x>
-      <y>570</y>
+      <x>10</x>
+      <y>580</y>
       <width>871</width>
-      <height>192</height>
+      <height>81</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -31,8 +31,8 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>871</width>
-      <height>192</height>
+      <width>0</width>
+      <height>0</height>
      </size>
     </property>
    </widget>
@@ -40,7 +40,7 @@
     <property name="geometry">
      <rect>
       <x>280</x>
-      <y>30</y>
+      <y>40</y>
       <width>603</width>
       <height>531</height>
      </rect>
@@ -99,7 +99,7 @@
     <property name="geometry">
      <rect>
       <x>13</x>
-      <y>31</y>
+      <y>40</y>
       <width>256</width>
       <height>531</height>
      </rect>
@@ -139,6 +139,32 @@
     </property>
     <property name="animated">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="time_range">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>9</y>
+      <width>69</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="editable">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>13</y>
+      <width>54</width>
+      <height>12</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>时间范围</string>
     </property>
    </widget>
   </widget>

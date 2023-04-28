@@ -87,6 +87,16 @@ class Main(uiclass, baseclass):
         # action: stop
         self.action_stop.triggered.connect(self.stop)
 
+        #时间范围
+        self.time_range.addItem('5s')
+        self.time_range.addItem('10s')
+        self.time_range.addItem('30s')
+        self.time_range.addItem('60s')
+        self.time_range.addItem('5min')
+        self.time_range.addItem('10min')
+        self.time_range.addItem('30min')
+        self.time_range.setItemText (0, '5s')
+
         # 线程池
         self.pool=QThreadPool.globalInstance()        
         self.pool.setMaxThreadCount(MaxThreadCount) # 线程池尺寸 
@@ -262,10 +272,13 @@ class Main(uiclass, baseclass):
                 widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))
                 
                 #实例化
-                vc_plot=VcPlot(vc.name,vc.db_data.address,widget)               
+                vc_plot=VcPlot(vc.name,vc.db_data.address,widget) 
+                vc_plot.set_xrange(self.time_range.currentText())              
                 #信号连接
                 #更新
                 self.plot_update.connect(vc_plot.update_plot)
+                #改时间范围
+                self.time_range.currentTextChanged.connect(vc_plot.set_xrange)
                 #读数
                 vc.data_readed.connect(vc_plot.move)
                 #绘画队列

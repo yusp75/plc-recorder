@@ -15,11 +15,11 @@ from PySide2.QtGui import (
 from PySide2 import QtGui
 
 from snap7.types import Areas,WordLen
-from datetime import datetime
 from struct import unpack
 
 import random
 import snap7
+import datetime
 import time
 import util 
 import concurrent.futures
@@ -103,7 +103,7 @@ class Vc(QObject):
             self.db_data.data_type
         )
         # 返回x, y
-        return datetime.now().timestamp(), data_value  
+        return datetime.datetime.now().timestamp(), data_value  
     
     def batch_read(self):
         '''
@@ -200,7 +200,7 @@ class MyPlotWidget(pg.PlotWidget):
         self.widget_min_height=160
         self.setBackground('w') 
         self.showGrid(x=True,y=True)
-        self.setAxisItems({'bottom': pg.DateAxisItem()})
+        #self.setAxisItems({'bottom': pg.DateAxisItem()})
         self.setMinimumHeight(self.widget_min_height) 
         #不显示上下文菜单
         self.setContextMenuActionVisible('Downsample',False)
@@ -208,6 +208,10 @@ class MyPlotWidget(pg.PlotWidget):
         self.setContextMenuActionVisible('Points',False)
         #记录新建、拖放的曲线
         self.queue_plot=[]
+
+        axis_x=pg.DateAxisItem()
+        axis_x.setTickSpacing(5,1)
+        self.setAxisItems({'bottom':axis_x})
 
     def dragMoveEvent(self, event):
         src=event.source()
@@ -260,7 +264,7 @@ class VcPlot(QObject):
             self.y.append(data['y'])            
             
     def mplot(self):
-        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=5,symbolBrush=('b'))
+        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
         
         plotItem=self.widget.getPlotItem()      
@@ -289,7 +293,7 @@ class VcPlot(QObject):
         '''
         更新plot数据
         '''
-        #print('come from %s'%msg)
+        #print('come from %s'%msg)        
         self.plot.setData(self.x,self.y)
 
     @Slot(dict)
@@ -309,3 +313,18 @@ class VcPlot(QObject):
         随机颜色r g b
         '''       
         return (random.randint(0,255),random.randint(0,255),random.randint(0,255))
+
+    @Slot(str)
+    def set_xrange(self,range):
+        seconds={
+        '5s':5,
+        '10s':10,
+        '30s':30,
+        '60s':60,
+        '5min':5*60,
+        '10min':10*60,
+        '30min':30*60,
+        }
+        dt2=datetime.datetime.now()
+        dt1=dt2+datetime.timedelta(seconds=-1*seconds[range])
+        self.widget.setXRange(dt1.timestamp(),dt2.timestamp())
