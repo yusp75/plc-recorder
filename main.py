@@ -65,8 +65,8 @@ class MyWorker(QRunnable):
 
 # 主函数
 class Main(uiclass, baseclass):
-    plot_update=Signal(str) #信号：更新图形
-    app_exited=Signal(bool) #信号：程序退出
+    sig_plot_update=Signal(str) #信号：更新图形
+    sig_app_exited=Signal(bool) #信号：程序退出    
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -104,7 +104,7 @@ class Main(uiclass, baseclass):
         # 定时刷新图形
         self.timer=QTimer()
         self.timer.setInterval(1000) #1s
-        self.timer.timeout.connect(partial(self.plot_update.emit,'hi'))
+        self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据
         self.db=Db()
@@ -190,7 +190,7 @@ class Main(uiclass, baseclass):
         self.worker_100ms.set_running(False)
         self.worker_1s.set_running(False)
 
-        self.app_exited.emit(True)
+        self.sig_app_exited.emit(True)
         self.pool.waitForDone(100)
         print("main window is closed.")
         event.accept()        
@@ -252,7 +252,7 @@ class Main(uiclass, baseclass):
             #新建widget要放到layout上
             self.layout.addWidget(widget)
             #新建实例，连接放下信号
-            widget.item_droped.connect(self.my_plot) 
+            widget.sig_item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
         for vc in widget.queue_plot:
@@ -276,7 +276,7 @@ class Main(uiclass, baseclass):
                 vc_plot.set_xrange(self.time_range.currentText())              
                 #信号连接
                 #更新
-                self.plot_update.connect(vc_plot.update_plot)
+                self.sig_plot_update.connect(vc_plot.update_plot)
                 #改plot时间范围
                 self.time_range.currentTextChanged.connect(vc_plot.set_xrange)
                 #鼠标悬停更新窗口右上角xy

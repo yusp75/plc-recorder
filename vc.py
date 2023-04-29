@@ -171,6 +171,7 @@ class MyLegend(pg.LegendItem):
                  pen=None, brush=None, labelTextColor=None, frame=True,
                  labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
         pg.LegendItem.__init__(self,**kwargs)
+        self.address=kwargs['address']
 
     def mouseDragEvent(self, event):
         pos=event.pos()
@@ -187,12 +188,28 @@ class MyLegend(pg.LegendItem):
         p.setBrush(self.brush)
         p.drawRect(self.items[0][1].geometry())
 
+    @Slot(dict)
+    def set_y_value(self,data):
+        '''
+        在标签后面显示y值
+        '''
+        p=data['p']
+        value=data['value']
+        
+        label=self.getLabel(p)
+        if label is not None:
+            try: 
+                s,_=label.text.split(':')
+            except:
+                s=label.text
+            label.setText('%s:%s'%(s,value))
+
 class MyPlotWidget(pg.PlotWidget):
     '''
     重写PlotWidget拖放事件
     '''
     #拖放信号
-    item_droped=Signal(dict)
+    sig_item_droped=Signal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -233,7 +250,7 @@ class MyPlotWidget(pg.PlotWidget):
         addr=source_item.item(0, 1).text()
         #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
         #发送放下信号
-        self.item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
+        self.sig_item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
 
 
 class VcPlot(QObject):
@@ -241,6 +258,7 @@ class VcPlot(QObject):
     变量类画图
     '''
     sig_data_xy=Signal(str,str) #鼠标位置的点
+    sig_update_y_value=Signal(dict) #信号：更新lengend后值
 
     def __init__(self,name,address,widget,delay,data_type):
         super().__init__()
@@ -264,6 +282,7 @@ class VcPlot(QObject):
         #游丝
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
+        self.legend=None
 
         #call plot
         self.mplot()
@@ -275,7 +294,10 @@ class VcPlot(QObject):
                 self.x[:-1]=self.x[1:]
                 self.y[:-1]=self.y[1:]
             self.x.append(data['x'])
-            self.y.append(data['y'])            
+            self.y.append(data['y'])  
+            #update legend
+            p=self.widget.getPlotItem()
+            self.sig_update_y_value.emit({'p':self.plot,'value':data['y']})
             
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
@@ -289,11 +311,14 @@ class VcPlot(QObject):
         plotItem=self.widget.getPlotItem()      
         pen=pg.mkPen(255,0,0)
         brush=pg.mkBrush(0,255,0)
-        legend=MyLegend(pen=pen,brush=brush,frame=True)
+        self.legend=MyLegend(pen=pen,brush=brush,frame=True,address=self.address)
+        #legend文本附加值
+        self.sig_update_y_value.connect(self.legend.set_y_value)
+
         if plotItem.legend is None:
-            plotItem.legend=legend
-            legend.addItem(self.plot,self.name) 
-            legend.setParentItem(plotItem)
+            plotItem.legend=self.legend
+            self.legend.addItem(self.plot,self.name) 
+            self.legend.setParentItem(plotItem)
 
         elif len(plotItem.legend.items)>=1:
             plotItem.legend.removeItem(self.name)
