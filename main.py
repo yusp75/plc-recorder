@@ -103,7 +103,7 @@ class Main(uiclass, baseclass):
 
         # 定时刷新图形
         self.timer=QTimer()
-        self.timer.setInterval(1000) #1s
+        self.timer.setInterval(500) #1s
         self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据

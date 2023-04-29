@@ -282,7 +282,7 @@ class VcPlot(QObject):
         #游丝
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
-        self.legend=None
+        #self.legend=None
 
         #call plot
         self.mplot()
@@ -311,18 +311,20 @@ class VcPlot(QObject):
         plotItem=self.widget.getPlotItem()      
         pen=pg.mkPen(255,0,0)
         brush=pg.mkBrush(0,255,0)
-        self.legend=MyLegend(pen=pen,brush=brush,frame=True,address=self.address)
+        legend=MyLegend(pen=pen,brush=brush,frame=True,address=self.address)
         #legend文本附加值
-        self.sig_update_y_value.connect(self.legend.set_y_value)
+        self.sig_update_y_value.connect(legend.set_y_value)
 
+        offset=10
         if plotItem.legend is None:
-            plotItem.legend=self.legend
-            self.legend.addItem(self.plot,self.name) 
-            self.legend.setParentItem(plotItem)
-
+            plotItem.legend=legend
         elif len(plotItem.legend.items)>=1:
+            if plotItem.legend is not None:
+                offset=len(plotItem.legend.items) * 10
             plotItem.legend.removeItem(self.name)
-            plotItem.legend.addItem(self.plot,self.name)
+        legend.setParentItem(plotItem)    
+        legend.addItem(self.plot,self.name)         
+        #legend.setOffset(offset)
 
         self.plot.sigClicked.connect(self.item_clicked)
         self.widget.getViewBox().addItem(self.plot)        
