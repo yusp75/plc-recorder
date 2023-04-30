@@ -273,7 +273,8 @@ class VcPlot(QObject):
         self.brush=pg.mkBrush(255,0,0)
         self.x=[]
         self.y=[]
-        self.ds=1
+        self.ds=50
+        self.ptr=0
         
         if self.delay in ['10ms','20ms','50ms','100ms']:
             factor=int(self.delay[:-2])
@@ -290,15 +291,26 @@ class VcPlot(QObject):
     @Slot(dict) #x,y,addr
     def move(self,data):
         if self.address==data['addr']: #地址相符的更新
+            if len(self.x)>=self.ds:
+                self.x[:-1]=self.x[1:]
+                self.y[:-1]=self.y[1:]
+
             self.x.append(data['x'])
-            self.y.append(data['y'])  
+            if isinstance(data['y'],float):
+                y=round(data['y'],2)
+                self.y.append(y)
+            else:
+                self.y.append(data['y'])  
+            
             #update legend
-            p=self.widget.getPlotItem()
             self.sig_update_y_value.emit({'p':self.plot,'value':data['y']})
             
     def mplot(self):
         self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
         self.plot.curve.setClickable(True)
+        self.plot.setDownsampling(auto=True)
+        self.plot.setClipToView(True)        
+        self.plot.setData(self.x,self.y)
 
         #游丝
         self.widget.addItem(self.vLine, ignoreBounds=True)
@@ -335,13 +347,12 @@ class VcPlot(QObject):
         '''
         更新plot数据
         '''
-        #print('come from %s'%msg)        
-        self.x[:-1]=self.x[1:]
-        self.y[:-1]=self.y[1:]
+        #print('come from %s'%msg) 
 
-        self.plot.setDownsampling(ds=self.ds,auto=True,method='peak')
-        self.plot.setClipToView(True)        
-        self.plot.setData(self.x,self.y)
+        self.ptr+=1 
+        
+        self.plot.setData(self.x,self.y)      
+        #self.plot.setPos(-self.ptr,0)
 
     @Slot(dict)
     def update_plot_xy(self,data):
@@ -375,6 +386,7 @@ class VcPlot(QObject):
         dt2=datetime.datetime.now()
         dt1=dt2+datetime.timedelta(seconds=-1*seconds[range])
         self.widget.setXRange(dt1.timestamp(),dt2.timestamp())
+        self.ds=seconds[range]*1000/100  # 100ms间隔
 
 
     def mouseMoved(self,event):
@@ -398,11 +410,15 @@ class VcPlot(QObject):
             for i,x in enumerate(self.x):
                 if int(x)==index:
                     #print(self.y[i])
-                    self.sig_data_xy.emit(xv,str(self.y[i])) #emit
+                    try:
+                        self.sig_data_xy.emit(xv,str(self.y[i])) #emit
+                    except IndexError:
+                        pass
                     break
 
             self.vLine.setPos(mousePoint.x())
             self.hLine.setPos(mousePoint.y())
         else:
-            self.hLine.hide()
+            self.vLine.setPos(-1)
+            self.hLine.setPos(-1)
             
