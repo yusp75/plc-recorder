@@ -60,7 +60,7 @@ class MyWorker(QRunnable):
         self.running=flag
     # 设置停止标志
     def set_pause(self,flag):
-        self.puase=flag
+        self.pause=flag
 
 
 # 主函数
@@ -102,9 +102,9 @@ class Main(uiclass, baseclass):
         self.pool.setMaxThreadCount(MaxThreadCount) # 线程池尺寸 
 
         # 定时刷新图形
-        self.timer=QTimer()
-        self.timer.setInterval(100) #1s
-        self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
+        #self.timer=QTimer()
+        #self.timer.setInterval(100) #1s
+        #self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据
         self.db=Db()
@@ -160,18 +160,9 @@ class Main(uiclass, baseclass):
 
     def start(self):
         '''
-        启动
-        '''    
-
+        启动线程操作
+        '''   
         # 启动更新画面的定时器
-        self.timer.start()
-
-        #self.worker_10ms.set_running(True)
-        #self.worker_20ms.set_running(True)
-        #self.worker_50ms.set_running(True)
-        #self.worker_100ms.set_running(True)
-        #self.worker_1s.set_running(True)
-
         self.worker_10ms.set_pause(False)
         self.worker_20ms.set_pause(False)
         self.worker_50ms.set_pause(False)
@@ -197,10 +188,8 @@ class Main(uiclass, baseclass):
                 
     def stop(self):
         '''
-        停止定时器及线程
-        '''
-        self.timer.stop()          
-        
+        停止线程操作
+        '''        
         self.worker_10ms.set_pause(True)
         self.worker_20ms.set_pause(True)
         self.worker_50ms.set_pause(True)
@@ -245,7 +234,7 @@ class Main(uiclass, baseclass):
         name=param['name']
         widget=param['widget']
         msg=param['msg']
-        print(param['msg'])
+        #print(param['msg'])
 
         if widget is None:
             widget=MyPlotWidget() 

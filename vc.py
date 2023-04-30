@@ -301,7 +301,7 @@ class VcPlot(QObject):
                 self.y.append(y)
             else:
                 self.y.append(data['y'])  
-            
+            self.update_plot("self")
             #update legend
             self.sig_update_y_value.emit({'p':self.plot,'value':data['y']})
             
@@ -316,7 +316,7 @@ class VcPlot(QObject):
         self.widget.addItem(self.vLine, ignoreBounds=True)
         self.widget.addItem(self.hLine, ignoreBounds=True)        
         self.widget.getPlotItem().scene().sigMouseMoved.connect(self.mouseMoved)
-        
+        #legend
         plotItem=self.widget.getPlotItem()      
         pen=pg.mkPen(255,0,0)
         brush=pg.mkBrush(0,255,0)
@@ -350,7 +350,7 @@ class VcPlot(QObject):
         #print('come from %s'%msg) 
 
         self.ptr+=1 
-        
+
         self.plot.setData(self.x,self.y)      
         #self.plot.setPos(-self.ptr,0)
 
