@@ -277,7 +277,7 @@ class VcPlot(QObject):
         
         if self.delay in ['10ms','20ms','50ms','100ms']:
             factor=int(self.delay[:-2])
-            self.ds=1000/(factor*2) # 1秒2个值
+            self.ds=int(500/(factor*2)) # 1秒2个值
 
         #游丝
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
@@ -290,9 +290,6 @@ class VcPlot(QObject):
     @Slot(dict) #x,y,addr
     def move(self,data):
         if self.address==data['addr']: #地址相符的更新
-            if len(self.x)>1000:
-                self.x[:-1]=self.x[1:]
-                self.y[:-1]=self.y[1:]
             self.x.append(data['x'])
             self.y.append(data['y'])  
             #update legend
@@ -338,7 +335,10 @@ class VcPlot(QObject):
         '''
         更新plot数据
         '''
-        #print('come from %s'%msg)
+        #print('come from %s'%msg)        
+        self.x[:-1]=self.x[1:]
+        self.y[:-1]=self.y[1:]
+
         self.plot.setDownsampling(ds=self.ds,auto=True,method='peak')
         self.plot.setClipToView(True)        
         self.plot.setData(self.x,self.y)
@@ -403,3 +403,6 @@ class VcPlot(QObject):
 
             self.vLine.setPos(mousePoint.x())
             self.hLine.setPos(mousePoint.y())
+        else:
+            self.hLine.hide()
+            
