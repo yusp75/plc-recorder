@@ -106,7 +106,7 @@ class Curve(uiclass, baseclass):
             #新建widget要放到layout上
             self.layout.addWidget(widget)
             #新建实例，连接放下信号
-            widget.item_droped.connect(self.my_plot) 
+            widget.sig_item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
         for plot in widget.queue_plot:
@@ -125,7 +125,7 @@ class Curve(uiclass, baseclass):
         widget.setTitle('%s %s:%s'%(title,name,address))
         
         #实例化
-        vc_plot=VcPlot(name,address,widget)               
+        vc_plot=VcPlot(name,address,widget,None,None)               
         #信号连接
         #更新
         self.plot_update.connect(vc_plot.update_plot_xy)              
