@@ -23,6 +23,8 @@ from vc import MyPlotWidget,VcPlot,Vc
 
 import pyqtgraph as pg
 import sys
+import datetime
+import time
 
 
 uiclass, baseclass = pg.Qt.loadUiType("main.ui")
@@ -66,7 +68,8 @@ class MyWorker(QRunnable):
 # 主函数
 class Main(uiclass, baseclass):
     sig_plot_update=Signal(str) #信号：更新图形
-    sig_app_exited=Signal(bool) #信号：程序退出    
+    sig_app_exited=Signal(bool) #信号：程序退出   
+    sig_log_record=Signal(str,str) #信号：日志
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -76,6 +79,8 @@ class Main(uiclass, baseclass):
         # 动作
         # action: Io variable      
         self.io = Io()
+        self.io.sig_log_record.connect(self.log)
+
         self.action_io.triggered.connect(self.io.show)
         self.dbs=self.io.list_var
         self.client=self.io.client
@@ -152,6 +157,8 @@ class Main(uiclass, baseclass):
         self.vcs=[]
         for db_data in self.dbs:
             vc=Vc(self.client,self.db,db_data)
+            #连接log信号
+            vc.sig_log_record.connect(self.log)
             self.vcs.append(vc)
 
         pg.setConfigOption('useOpenGL',True)
@@ -221,7 +228,8 @@ class Main(uiclass, baseclass):
         '''
         树形菜单双击
         '''
-        #新建plotwidget        
+        #新建plotwidget
+        self.log(item['name'],'新建一个绘图组件')        
         self.my_plot({'name':item['name'],'widget':None,'msg':'new'})
         
     @Slot(dict)
@@ -271,7 +279,7 @@ class Main(uiclass, baseclass):
                 #鼠标悬停更新窗口右上角xy
                 vc_plot.sig_data_xy.connect(self.update_label_xy)
                 #读数
-                vc.data_readed.connect(vc_plot.move)
+                vc.sig_data_readed.connect(vc_plot.move)
                 #绘画队列
                 widget.queue_plot.append(vc_plot)
 
@@ -284,6 +292,15 @@ class Main(uiclass, baseclass):
         '''
         self.value_x.setText(tm)
         self.value_y.setText(v)
+
+    @Slot(str,str)
+    def log(self,name,msg):
+        '''
+        记录信息
+        '''
+        dt=datetime.datetime.now()
+        msg='%s\t%s\t%s'%(dt.strftime('%Y/%m/%d %H:%M'),name,msg)
+        self.log_list.addItem(msg) #log_list在main.ui中定义
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

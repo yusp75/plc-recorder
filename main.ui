@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QListWidget" name="message">
+   <widget class="QListWidget" name="log_list">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -34,6 +34,18 @@
       <width>0</width>
       <height>0</height>
      </size>
+    </property>
+    <property name="editTriggers">
+     <set>QAbstractItemView::NoEditTriggers</set>
+    </property>
+    <property name="showDropIndicator" stdset="0">
+     <bool>false</bool>
+    </property>
+    <property name="modelColumn">
+     <number>0</number>
+    </property>
+    <property name="sortingEnabled">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QScrollArea" name="scroll">

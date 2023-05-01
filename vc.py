@@ -33,7 +33,8 @@ class Vc(QObject):
     '''
     变量类 variable class
     '''
-    data_readed=Signal(dict)
+    sig_data_readed=Signal(dict)
+    sig_log_record=Signal(str,str) #信号：日志
     
     def __init__(self,client,db,db_data):
         super().__init__()
@@ -89,6 +90,7 @@ class Vc(QObject):
             data_value,data_value_str=self.cal_v(data_b,self.db_data)
         except Exception as e:
             print('Line 91 in vc.py: ',str(e),self.db_data.address,data_b)
+            self.sig_log_record.emit('Vc','Line 91,%s:%s'%(self.db_data.address,data_b))
         #print('%s: %s, cost %d.' % (self.db_data.address,data_b,self.client.get_exec_time()))
         #print(self.db_data.address,self.db_data.areas,self.db_data.number,self.db_data.start,self.db_data.size,data_b,data_value)
         
@@ -132,7 +134,7 @@ class Vc(QObject):
         x,y=self.read_data()
         #发射信号
         try:
-            self.data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
+            self.sig_data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
         except RuntimeError:
             print('vc read runtime error')
         

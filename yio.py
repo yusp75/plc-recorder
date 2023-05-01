@@ -1,7 +1,8 @@
 from PySide2.QtCore import (
     QFile,
     QIODevice,
-    QObject
+    QObject,
+    Signal,
 )
 from PySide2.QtWidgets import (
     QApplication,
@@ -28,6 +29,11 @@ AREAS_TYPE={Areas.PE:'Areas.PE',Areas.PA:'Areas.PE',Areas.PA:'Areas.PE'
             ,Areas.MK:'Areas.MK',Areas.DB:'Areas.DB',}
 
 class Io(QObject):
+    '''
+    连接PLC，读取定义的变量
+    '''
+    sig_log_record=Signal(str,str) #信号：日志
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -70,6 +76,7 @@ class Io(QObject):
                 self.client=client
         except RuntimeError as e:
             print('link plc error:',str(e))
+            self.sig_log_record.emit('io','link plc error:%s'%str(e))
             client.destroy()
     
     # plc连接参数
