@@ -88,7 +88,7 @@ class Vc(QObject):
             data_raw=data_b.decode(encoding='utf_16_be')
             data_value,data_value_str=self.cal_v(data_b,self.db_data)
         except Exception as e:
-            print('Line 131 in main.py: ',str(e),self.db_data.address,data_b)
+            print('Line 91 in vc.py: ',str(e),self.db_data.address,data_b)
         #print('%s: %s, cost %d.' % (self.db_data.address,data_b,self.client.get_exec_time()))
         #print(self.db_data.address,self.db_data.areas,self.db_data.number,self.db_data.start,self.db_data.size,data_b,data_value)
         
@@ -202,6 +202,8 @@ class MyLegend(pg.LegendItem):
                 s,_=label.text.split(':')
             except:
                 s=label.text
+            if isinstance(value,float):
+                value=round(value,2)
             label.setText('%s:%s'%(s,value))
 
 class MyPlotWidget(pg.PlotWidget):
