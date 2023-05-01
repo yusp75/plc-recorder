@@ -114,13 +114,6 @@ class Curve(uiclass, baseclass):
                 print('droped but existed, skip:'+name)
                 return               
 
-        #for vc in self.vcs:
-        #    if vc.name==name:                    
-                #vc.enable=True
-                #布尔y设置0-1，其他格数设置为1
-        #        if vc.db_data.data_type=='bool':
-        #            widget.setYRange(0,1,padding=0)                    
-                #标题：名称+地址
         title=widget.windowTitle()
         widget.setTitle('%s %s:%s'%(title,name,address))
         
@@ -131,9 +124,6 @@ class Curve(uiclass, baseclass):
         self.plot_update.connect(vc_plot.update_plot_xy)              
         #绘画队列
         widget.queue_plot.append(vc_plot)
-              
-                #退出循环
-        #        break
 
     @Slot(str)
     def menu_dblclick(self, item):
