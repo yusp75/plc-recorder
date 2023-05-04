@@ -107,9 +107,9 @@ class Main(uiclass, baseclass):
         self.pool.setMaxThreadCount(MaxThreadCount) # 线程池尺寸 
 
         # 定时刷新图形
-        #self.timer=QTimer()
-        #self.timer.setInterval(100) #1s
-        #self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
+        self.timer=QTimer()
+        self.timer.setInterval(200) #1s
+        self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据
         self.db=Db()
@@ -168,7 +168,8 @@ class Main(uiclass, baseclass):
     def start(self):
         '''
         启动线程操作
-        '''   
+        '''  
+        self.timer.start() 
         # 启动更新画面的定时器
         self.worker_10ms.set_pause(False)
         self.worker_20ms.set_pause(False)
@@ -196,7 +197,9 @@ class Main(uiclass, baseclass):
     def stop(self):
         '''
         停止线程操作
-        '''        
+        '''   
+        self.timer.stop()     
+
         self.worker_10ms.set_pause(True)
         self.worker_20ms.set_pause(True)
         self.worker_50ms.set_pause(True)

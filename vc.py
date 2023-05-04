@@ -16,6 +16,7 @@ from PySide2 import QtGui
 
 from snap7.types import Areas,WordLen
 from struct import unpack
+from scipy import signal
 
 import random
 import snap7
@@ -282,8 +283,8 @@ class VcPlot(QObject):
         
         if self.delay in ['10ms','20ms','50ms','100ms']:
             factor=int(self.delay[:-2])
-            self.ds=int(500/(factor*2)) # 1秒2个值
-
+            self.ds=int(1000/(1000/factor)) # 1秒2个值
+        self.ds=5*5  # 200ms间隔
         #游丝
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.hLine = pg.InfiniteLine(angle=0, movable=False)
@@ -296,16 +297,16 @@ class VcPlot(QObject):
     def move(self,data):
         if self.address==data['addr']: #地址相符的更新
             if len(self.x)>=self.ds:
-                self.x[:-1]=self.x[1:]
-                self.y[:-1]=self.y[1:]
-
+                self.x=self.x[1:]
+                self.y=self.y[1:]
+            #print(self.ds,len(self.x))
             self.x.append(data['x'])
             if isinstance(data['y'],float):
                 y=round(data['y'],2)
                 self.y.append(y)
             else:
                 self.y.append(data['y'])  
-            self.update_plot("self")
+            #self.update_plot("self")
             #update legend
             self.sig_update_y_value.emit({'p':self.plot,'value':data['y']})
             
@@ -390,7 +391,7 @@ class VcPlot(QObject):
         dt2=datetime.datetime.now()
         dt1=dt2+datetime.timedelta(seconds=-1*seconds[range])
         self.widget.setXRange(dt1.timestamp(),dt2.timestamp())
-        self.ds=seconds[range]*1000/100  # 100ms间隔
+        self.ds=seconds[range]*5  # 200ms间隔
 
 
     def mouseMoved(self,event):
