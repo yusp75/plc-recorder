@@ -55,7 +55,8 @@ class MyWorker(QRunnable):
                     self.queue.put(q)
                 #print('running:%s, %s' % (self.name,q.db_data.address))
             
-            QThread.msleep(self.delay)
+            #QThread.msleep(self.delay)
+            time.sleep(self.delay/1000)
     
     # 设置运行标志
     def set_running(self, flag):
@@ -147,11 +148,11 @@ class Main(uiclass, baseclass):
         self.worker_1s=MyWorker('1s',self.queue_1s,1000)
 
         # 启动线程
-        self.pool.start(self.worker_10ms)
-        self.pool.start(self.worker_20ms)
-        self.pool.start(self.worker_50ms)
-        self.pool.start(self.worker_100ms)
-        self.pool.start(self.worker_1s)
+        self.pool.start(self.worker_10ms,10)
+        self.pool.start(self.worker_20ms,20)
+        self.pool.start(self.worker_50ms,30)
+        self.pool.start(self.worker_100ms,100)
+        self.pool.start(self.worker_1s,100)
 
         # 变量列表
         self.vcs=[]
@@ -309,6 +310,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # 主窗体
     main = Main()
-    main.show()
+    main.showMaximized()
 
     sys.exit(app.exec_())
