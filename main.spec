@@ -1,16 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
-
-sys.setrecursionlimit(5000)
+sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 block_cipher = None
 
 
 a = Analysis(
-    ['main.py'],
+    ['main.py','vc.py','db.py','myaml.py','ymenu.py','yio.py','curve.py','util.py'],
     pathex=[],
-    binaries=[],
-    datas=[],
+    binaries=[('yio.py','.'),('db.py','.'),('mtypes.py','.'),('myaml.py','.'),('vc.py','.'),('ymenu.py','.'),('util.py','.'),('curve.py','.'),('resource_rc.py','.')],
+    #binaries=[('*.py','.')],
+    datas=[('*.ui','.'),('var/*.yaml','var'),('conf/*.yaml','conf'),('icon/*.png','icon'),('resource.qrc','.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
