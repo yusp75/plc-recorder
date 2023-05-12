@@ -5,13 +5,17 @@ from PySide2.QtCore import (
     QTimer,
     Slot,
     Signal,
+    QObject,
     )
 
 from PySide2.QtWidgets import (
     QApplication,
     QMainWindow,
-    QMessageBox,    
+    QMessageBox,   
+    QWidget,
     )
+from PySide2.QtUiTools import loadUiType
+
 from yio import Io
 from curve import Curve
 from db import Db
@@ -19,17 +23,19 @@ from ymenu import Menu
 from queue import Queue
 from functools import partial
 
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.figure import Figure
+
 from vc import MyPlotWidget,VcPlot,Vc
 
-import pyqtgraph as pg
 import sys
 import datetime
 import time
+import util
 
-
-uiclass, baseclass = pg.Qt.loadUiType("main.ui")
+uiclass, base_class = loadUiType("main.ui")
 MaxThreadCount=5 #线程池尺寸
-
 
 # 线程函数
 class MyWorker(QRunnable):
@@ -67,7 +73,7 @@ class MyWorker(QRunnable):
 
 
 # 主函数
-class Main(uiclass, baseclass):
+class Main(uiclass, base_class):
     sig_plot_update=Signal(str) #信号：更新图形
     sig_app_exited=Signal(bool) #信号：程序退出   
     sig_log_record=Signal(str,str) #信号：日志
@@ -75,8 +81,7 @@ class Main(uiclass, baseclass):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-
-        #pg.setConfigOption('leftButtonPan',False)
+        self.setWindowTitle('主界面')
         # 动作
         # action: Io variable      
         self.io = Io()
@@ -86,8 +91,8 @@ class Main(uiclass, baseclass):
         self.dbs=self.io.list_var
         self.client=self.io.client
         # action: history curve
-        self.curve=Curve()
-        self.action_his.triggered.connect(self.curve.show)
+        #self.curve=Curve()
+        #self.action_his.triggered.connect(self.curve.show)
         # action: start
         self.action_start.triggered.connect(self.start)
         # action: stop
@@ -102,6 +107,7 @@ class Main(uiclass, baseclass):
         self.time_range.addItem('10min')
         self.time_range.addItem('30min')
         self.time_range.setItemText (0, '5s')
+
 
         # 线程池
         self.pool=QThreadPool.globalInstance()        
@@ -161,8 +167,6 @@ class Main(uiclass, baseclass):
             #连接log信号
             vc.sig_log_record.connect(self.log)
             self.vcs.append(vc)
-
-        pg.setConfigOption('useOpenGL',True)
 
     #end of init
 
@@ -232,9 +236,9 @@ class Main(uiclass, baseclass):
         '''
         树形菜单双击
         '''
-        #新建plotwidget
+        #新建画布
         self.log(item['name'],'新建一个绘图组件')        
-        self.my_plot({'name':item['name'],'widget':None,'msg':'new'})
+        self.my_plot({'name':item['name'],'canvas':None,'msg':'new'})
         
     @Slot(dict)
     def my_plot(self, param):
@@ -244,19 +248,18 @@ class Main(uiclass, baseclass):
         '''
 
         name=param['name']
-        widget=param['widget']
+        canvas=param['canvas']
         msg=param['msg']
-        #print(param['msg'])
 
-        if widget is None:
-            widget=MyPlotWidget() 
-            #新建widget要放到layout上
-            self.layout.addWidget(widget)
+        if canvas is None:
+            canvas=MyCanvas() 
+            self.curve_layout.addWidget(NavigationToolbar(canvas, self))
+            self.curve_layout.addWidget(canvas)
             #新建实例，连接放下信号
-            widget.sig_item_droped.connect(self.my_plot) 
+            #widget.sig_item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
-        for vc in widget.queue_plot:
+        for vc in canvas.queue_plot:
             if vc.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
                 return               
@@ -266,15 +269,11 @@ class Main(uiclass, baseclass):
                 #vc.enable=True
                 #布尔y设置0-1，其他格数设置为1
                 if vc.db_data.data_type=='bool':
-                    widget.setYRange(0,1,padding=0)                    
-                #标题：名称+地址
-                title=widget.windowTitle()
-                print('title',title)
-                widget.setTitle('%s %s:%s'%(title,vc.db_data.name,vc.db_data.address))
+                    pass                   
                 
                 #实例化
-                vc_plot=VcPlot(vc.name,vc.db_data.address,widget,vc.db_data.delay,vc.db_data.data_type) 
-                vc_plot.set_xrange(self.time_range.currentText())              
+                vc_plot=VcPlot(vc.name,vc.db_data.address,self.canvas,vc.db_data.delay,vc.db_data.data_type) 
+            
                 #信号连接
                 #更新
                 self.sig_plot_update.connect(vc_plot.update_plot)
@@ -285,7 +284,7 @@ class Main(uiclass, baseclass):
                 #读数
                 vc.sig_data_readed.connect(vc_plot.move)
                 #绘画队列
-                widget.queue_plot.append(vc_plot)
+                canvas.queue_plot.append(vc_plot)
 
                 #退出循环
                 break

@@ -7,7 +7,7 @@ from pyqtgraph import PlotWidget, plot
 import pyqtgraph as pg
 from db import Db
 from ymenu import Menu
-from vc import MyPlotWidget,VcPlot,Vc
+from vc import VcPlot,Vc
 
 import sys
 import os
@@ -102,7 +102,7 @@ class Curve(uiclass, baseclass):
         print(param['msg'])
 
         if widget is None:
-            widget=MyPlotWidget() 
+            widget=QWidget() 
             #新建widget要放到layout上
             self.layout.addWidget(widget)
             #新建实例，连接放下信号

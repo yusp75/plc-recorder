@@ -12,11 +12,11 @@ from PySide2.QtGui import (
     QDrag,
     QStandardItemModel,
     QPainter)
-from PySide2 import QtGui
 
+from PySide2.QtWidgets import QWidget
 from snap7.types import Areas,WordLen
 from struct import unpack
-from scipy import signal
+#from scipy import signal
 
 import random
 import snap7
@@ -24,10 +24,76 @@ import datetime
 import time
 import util 
 import concurrent.futures
-import pyqtgraph as pg
 
+import matplotlib as mpl
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+
+mpl.use("QtAgg")
 
 mutex=QMutex()
+
+class MyPlotWidget(QWidget):
+    '''
+    重写PlotWidget拖放事件
+    '''
+    #拖放信号
+    sig_item_droped=Signal(dict)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.widget_min_height=160
+        self.queue_plot=[]
+
+    def dragMoveEvent(self, event):
+        src=event.source()
+        if src and src!=self:
+            event.setDropAction(Qt.MoveAction)
+
+    def dragEnterEvent(self, event):
+        #改指示
+        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        data = event.mimeData()
+        source_item = QStandardItemModel()
+        source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
+        name=source_item.item(0, 0).text()
+        addr=source_item.item(0, 1).text()
+        #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
+        #发送放下信号
+        self.sig_item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
+
+    def resizeEvent(self,event):
+        super().resizeEvent(event)
+        print('widget resized')
+
+class MyCanvas(FigureCanvasQTAgg):
+    '''
+    matplotlib 自定义画布
+    '''
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        self.widget_min_height=160
+        self.queue_plot=[]
+
+    #super init
+    super().__init__(fig)
+
+
+    def dragEnterEvent(self, event):
+        #改指示
+        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
 
 
 class Vc(QObject):
@@ -106,7 +172,7 @@ class Vc(QObject):
             self.db_data.data_type
         )
         # 返回x, y
-        return datetime.datetime.now().timestamp(), data_value  
+        return datetime.datetime.now(), data_value  
     
     def batch_read(self):
         '''
@@ -135,7 +201,7 @@ class Vc(QObject):
         x,y=self.read_data()
         #发射信号
         try:
-            self.sig_data_readed.emit({'x':x,'y':y,'addr':self.db_data.address})
+            self.sig_data_readed.emit({'x':mpl.dates.date2num(x),'y':y,'addr':self.db_data.address})
         except RuntimeError:
             print('vc read runtime error')
         
@@ -166,97 +232,6 @@ class Vc(QObject):
     def get_enable(self):
         return self.enable
 
-class MyLegend(pg.LegendItem):
-    '''
-    重写legend拖放事件
-    '''
-    def __init__(self, size=None, offset=None, horSpacing=25, verSpacing=6,
-                 pen=None, brush=None, labelTextColor=None, frame=True,
-                 labelTextSize='9pt', colCount=1, sampleType=None, **kwargs):
-        pg.LegendItem.__init__(self,**kwargs)
-        self.address=kwargs['address']
-
-    def mouseDragEvent(self, event):
-        pos=event.pos()
-        for item in self.items: 
-            #print(pos, item[1].geometry())           
-            if item[1].geometry().contains(pos):
-                print('in')
-            #print(self.layout.geometry())
-        super().mouseDragEvent(event)
-
-    def paintEvent(self, event):
-        p=QPainter(self)
-        p.setPen(self.pen)
-        p.setBrush(self.brush)
-        p.drawRect(self.items[0][1].geometry())
-
-    @Slot(dict)
-    def set_y_value(self,data):
-        '''
-        在标签后面显示y值
-        '''
-        p=data['p']
-        value=data['value']
-        
-        label=self.getLabel(p)
-        if label is not None:
-            try: 
-                s,_=label.text.split(':')
-            except:
-                s=label.text
-            if isinstance(value,float):
-                value=round(value,2)
-            label.setText('%s:%s'%(s,value))
-
-class MyPlotWidget(pg.PlotWidget):
-    '''
-    重写PlotWidget拖放事件
-    '''
-    #拖放信号
-    sig_item_droped=Signal(dict)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.widget_min_height=160
-        self.setBackground('w') 
-        self.showGrid(x=True,y=True)
-        self.setAxisItems({'bottom': pg.DateAxisItem()})
-        self.setMinimumHeight(self.widget_min_height) 
-        #不显示上下文菜单
-        self.setContextMenuActionVisible('Downsample',False)
-        self.setContextMenuActionVisible('Alpha',False)
-        self.setContextMenuActionVisible('Points',False)
-        #记录新建、拖放的曲线
-        self.queue_plot=[]
-
-        axis_y=pg.AxisItem(orientation='left')
-        axis_y.setTickSpacing(0.5,1)
-        self.setAxisItems({'left':axis_y})
-
-    def dragMoveEvent(self, event):
-        src=event.source()
-        if src and src!=self:
-            event.setDropAction(Qt.MoveAction)
-
-    def dragEnterEvent(self, event):
-        #改指示
-        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event):
-        data = event.mimeData()
-        source_item = QStandardItemModel()
-        source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
-        name=source_item.item(0, 0).text()
-        addr=source_item.item(0, 1).text()
-        #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
-        #发送放下信号
-        self.sig_item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
-
 
 class VcPlot(QObject):
     '''
@@ -265,83 +240,50 @@ class VcPlot(QObject):
     sig_data_xy=Signal(str,str) #鼠标位置的点
     sig_update_y_value=Signal(dict) #信号：更新lengend后值
 
-    def __init__(self,name,address,widget,delay,data_type):
+    def __init__(self,name,address,canvas,delay,data_type):
         super().__init__()
         self.name=name
         self.address=address
         self.delay=delay
         self.data_type=data_type
-        self.widget=widget
-        self.plot=None
-        self.color=self.random_color()
-        self.pen=pg.mkPen(color=self.color, width=1, style=Qt.SolidLine)
-        self.brush=pg.mkBrush(255,0,0)
+        self.canvas=canvas
+        self.ax=None
+
         self.x=[]
         self.y=[]
-        self.ds=50
-        self.ptr=0
-        
-        if self.delay in ['10ms','20ms','50ms','100ms']:
-            factor=int(self.delay[:-2])
-            self.ds=int(1000/(1000/factor)) # 1秒2个值
-        self.ds=5*5  # 200ms间隔
-        #游丝
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine = pg.InfiniteLine(angle=0, movable=False)
-        #self.legend=None
 
         #call plot
         self.mplot()
     
     @Slot(dict) #x,y,addr
     def move(self,data):
+        '''
+        定尺寸队列，移动数据
+        '''
         if self.address==data['addr']: #地址相符的更新
-            if len(self.x)>=self.ds:
+            if len(self.x)>=100:
                 self.x=self.x[1:]
                 self.y=self.y[1:]
-            #print(self.ds,len(self.x))
+
             self.x.append(data['x'])
             if isinstance(data['y'],float):
                 y=round(data['y'],2)
                 self.y.append(y)
             else:
                 self.y.append(data['y'])  
-            #self.update_plot("self")
+            
+            self.update_plot("self")
             #update legend
-            self.sig_update_y_value.emit({'p':self.plot,'value':data['y']})
+            #self.sig_update_y_value.emit({'p':self.ax,'value':data['y']})
             
     def mplot(self):
-        self.plot=self.widget.plot(self.x,self.y,name=self.name,pen=self.pen,symbol='+',symbolSize=1,symbolBrush=('b'))
-        self.plot.curve.setClickable(True)
-        self.plot.setDownsampling(auto=True)
-        self.plot.setClipToView(True)        
-        self.plot.setData(self.x,self.y)
-
-        #游丝
-        self.widget.addItem(self.vLine, ignoreBounds=True)
-        self.widget.addItem(self.hLine, ignoreBounds=True)        
-        self.widget.getPlotItem().scene().sigMouseMoved.connect(self.mouseMoved)
-        #legend
-        plotItem=self.widget.getPlotItem()      
-        pen=pg.mkPen(255,0,0)
-        brush=pg.mkBrush(0,255,0)
-        legend=MyLegend(pen=pen,brush=brush,frame=True,address=self.address)
-        #legend文本附加值
-        self.sig_update_y_value.connect(legend.set_y_value)
-
-        offset=10
-        if plotItem.legend is None:
-            plotItem.legend=legend
-        elif len(plotItem.legend.items)>=1:
-            if plotItem.legend is not None:
-                offset=len(plotItem.legend.items) * 10
-            plotItem.legend.removeItem(self.name)
-        legend.setParentItem(plotItem)    
-        legend.addItem(self.plot,self.name)         
-        #legend.setOffset(offset)
-
-        self.plot.sigClicked.connect(self.item_clicked)
-        self.widget.getViewBox().addItem(self.plot)        
+        #self.ax=self.canvas.figure.subplots()
+        #self.ax.legend()
+        self.canvas.axex.set_autoscale_on(True)
+        self.canvas.axex.grid(True)
+        self.canvas.axex.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
+        
+        self._line,=self.canvas.axex.plot(self.x,self.y)              
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
@@ -353,11 +295,15 @@ class VcPlot(QObject):
         更新plot数据
         '''
         #print('come from %s'%msg) 
+        #print(self.x)
+        self._line.set_data(self.x,self.y)        
+        self.ax.relim()
+        self.ax.autoscale_view() 
+        self._line.figure.canvas.draw()
+        #self.ax.xaxis.set_major_locator(mpl.dates.MinuteLocator())
+        #self.ax.xaxis.set_minor_locator(mpl.dates.SecondLocator([10,20,30,40,50]))
 
-        self.ptr+=1 
-
-        self.plot.setData(self.x,self.y)      
-        #self.plot.setPos(-self.ptr,0)
+        
 
     @Slot(dict)
     def update_plot_xy(self,data):
