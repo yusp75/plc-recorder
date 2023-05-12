@@ -34,7 +34,7 @@ mpl.use("QtAgg")
 
 mutex=QMutex()
 
-class MyPlotWidget(QWidget):
+class MyWidget(QWidget):
     '''
     重写PlotWidget拖放事件
     '''
@@ -85,15 +85,6 @@ class MyCanvas(FigureCanvasQTAgg):
 
         #super init
         super().__init__(fig)
-
-
-    def dragEnterEvent(self, event):
-        #改指示
-        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
 
 
 class Vc(QObject):

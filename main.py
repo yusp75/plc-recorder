@@ -13,6 +13,7 @@ from PySide2.QtWidgets import (
     QMainWindow,
     QMessageBox,   
     QWidget,
+    QVBoxLayout,
     )
 from PySide2.QtUiTools import loadUiType
 
@@ -27,7 +28,7 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 
-from vc import MyCanvas,VcPlot,Vc
+from vc import MyWidget,MyCanvas,VcPlot,Vc
 
 import sys
 import datetime
@@ -252,9 +253,13 @@ class Main(uiclass, base_class):
         msg=param['msg']
 
         if canvas is None:
+            layout = QVBoxLayout()
             canvas=MyCanvas() 
-            self.curve_layout.addWidget(NavigationToolbar(canvas, self))
-            self.curve_layout.addWidget(canvas)
+            layout.addWidget(NavigationToolbar(canvas, self))
+            layout.addWidget(canvas)
+            widget=MyWidget()
+            widget.setLayout(layout)
+            self.curve_layout.addWidget(widget)
             #新建实例，连接放下信号
             #widget.sig_item_droped.connect(self.my_plot) 
 
