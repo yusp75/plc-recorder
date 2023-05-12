@@ -83,8 +83,8 @@ class MyCanvas(FigureCanvasQTAgg):
         self.widget_min_height=160
         self.queue_plot=[]
 
-    #super init
-    super().__init__(fig)
+        #super init
+        super().__init__(fig)
 
 
     def dragEnterEvent(self, event):
@@ -279,11 +279,11 @@ class VcPlot(QObject):
     def mplot(self):
         #self.ax=self.canvas.figure.subplots()
         #self.ax.legend()
-        self.canvas.axex.set_autoscale_on(True)
-        self.canvas.axex.grid(True)
-        self.canvas.axex.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
+        self.canvas.axes.set_autoscale_on(True)
+        self.canvas.axes.grid(True)
+        self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
-        self._line,=self.canvas.axex.plot(self.x,self.y)              
+        self._line,=self.canvas.axes.plot(self.x,self.y)              
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
@@ -297,8 +297,8 @@ class VcPlot(QObject):
         #print('come from %s'%msg) 
         #print(self.x)
         self._line.set_data(self.x,self.y)        
-        self.ax.relim()
-        self.ax.autoscale_view() 
+        self.canvas.axes.relim()
+        self.canvas.axes.autoscale_view() 
         self._line.figure.canvas.draw()
         #self.ax.xaxis.set_major_locator(mpl.dates.MinuteLocator())
         #self.ax.xaxis.set_minor_locator(mpl.dates.SecondLocator([10,20,30,40,50]))

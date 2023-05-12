@@ -27,7 +27,7 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 
-from vc import MyPlotWidget,VcPlot,Vc
+from vc import MyCanvas,VcPlot,Vc
 
 import sys
 import datetime
@@ -272,7 +272,7 @@ class Main(uiclass, base_class):
                     pass                   
                 
                 #实例化
-                vc_plot=VcPlot(vc.name,vc.db_data.address,self.canvas,vc.db_data.delay,vc.db_data.data_type) 
+                vc_plot=VcPlot(vc.name,vc.db_data.address,canvas,vc.db_data.delay,vc.db_data.data_type) 
             
                 #信号连接
                 #更新
