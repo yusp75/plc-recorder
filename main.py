@@ -14,6 +14,7 @@ from PySide2.QtWidgets import (
     QMessageBox,   
     QWidget,
     QVBoxLayout,
+    QLayout,
     )
 from PySide2.QtUiTools import loadUiType
 
@@ -82,7 +83,7 @@ class Main(uiclass, base_class):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.setWindowTitle('主界面')
+        self.setWindowTitle('PLC recorder')
         # 动作
         # action: Io variable      
         self.io = Io()
@@ -254,12 +255,14 @@ class Main(uiclass, base_class):
 
         if canvas is None:
             layout = QVBoxLayout()
+            layout.setSizeConstraint(QLayout.SetMinimumSize)
+            #widget=MyWidget()
+            #widget.setLayout(layout)
             canvas=MyCanvas() 
-            layout.addWidget(NavigationToolbar(canvas, self))
-            layout.addWidget(canvas)
-            widget=MyWidget()
-            widget.setLayout(layout)
-            self.curve_layout.addWidget(widget)
+            self.curve_layout.addWidget(NavigationToolbar(canvas, self))
+            self.curve_layout.addWidget(canvas)
+
+            #self.curve_layout.addWidget(widget)
             #新建实例，连接放下信号
             #widget.sig_item_droped.connect(self.my_plot) 
 

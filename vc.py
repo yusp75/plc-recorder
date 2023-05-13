@@ -45,6 +45,7 @@ class MyWidget(QWidget):
         super().__init__(parent)
 
         self.widget_min_height=160
+
         self.queue_plot=[]
 
     def dragMoveEvent(self, event):
@@ -80,11 +81,11 @@ class MyCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
-        self.widget_min_height=160
         self.queue_plot=[]
-
+        
         #super init
         super().__init__(fig)
+        self.setMinimumHeight(200)
 
 
 class Vc(QObject):
