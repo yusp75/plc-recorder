@@ -85,8 +85,31 @@ class MyCanvas(FigureCanvasQTAgg):
         
         #super init
         super().__init__(fig)
-        self.setMinimumHeight(200)
+        self.setMinimumHeight(210)
+        self.mpl_connect('figure_enter_event', self.dragEnterEvent)
 
+    def dragEnterEvent(self, event):
+        '''
+        拖放进入事件，改指示
+        '''
+        print('enter')
+        if event.mimeData().hasFormat('application/x-qstandarditemmodeldatalist'):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        '''
+        拖放放下事件
+        '''
+        data = event.mimeData()
+        source_item = QStandardItemModel()
+        source_item.dropMimeData(data, Qt.CopyAction,0,0,QModelIndex())
+        name=source_item.item(0, 0).text()
+        addr=source_item.item(0, 1).text()
+        #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
+        #发送放下信号
+        self.sig_item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
 
 class Vc(QObject):
     '''
@@ -270,9 +293,10 @@ class VcPlot(QObject):
             
     def mplot(self):
         #self.ax=self.canvas.figure.subplots()
-        #self.ax.legend()
+        self.canvas.axes.legend()
         self.canvas.axes.set_autoscale_on(True)
         self.canvas.axes.grid(True)
+        self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
         self._line,=self.canvas.axes.plot(self.x,self.y)              
