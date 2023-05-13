@@ -29,8 +29,11 @@ import matplotlib as mpl
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+import matplotlib.style as mplstyle
 
 mpl.use("QtAgg")
+#mplstyle.use(['dark_background', 'ggplot', 'fast'])
+mpl.rcParams["path.simplify_threshold"]=0.5
 
 mutex=QMutex()
 
@@ -78,6 +81,9 @@ class MyCanvas(FigureCanvasQTAgg):
     '''
     matplotlib 自定义画布
     '''
+    #拖放信号
+    sig_item_droped=Signal(dict)
+
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
@@ -86,7 +92,7 @@ class MyCanvas(FigureCanvasQTAgg):
         #super init
         super().__init__(fig)
         self.setMinimumHeight(210)
-        self.mpl_connect('figure_enter_event', self.dragEnterEvent)
+        self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event):
         '''
@@ -109,7 +115,7 @@ class MyCanvas(FigureCanvasQTAgg):
         addr=source_item.item(0, 1).text()
         #print('name:%s,address:%s'%(source_item.item(0, 0).text(),source_item.item(0, 1).text()))
         #发送放下信号
-        self.sig_item_droped.emit({'name':name,'addr':addr,'widget':self,'msg':'drop'})
+        self.sig_item_droped.emit({'name':name,'addr':addr,'canvas':self,'msg':'drop'})
 
 class Vc(QObject):
     '''
@@ -171,7 +177,7 @@ class Vc(QObject):
             data_raw=data_b.decode(encoding='utf_16_be')
             data_value,data_value_str=self.cal_v(data_b,self.db_data)
         except Exception as e:
-            print('Line 91 in vc.py: ',str(e),self.db_data.address,data_b)
+            print('Line 181 in vc.py: ',str(e),self.db_data.address,data_b)
             self.sig_log_record.emit('Vc','Line 91,%s:%s'%(self.db_data.address,data_b))
         #print('%s: %s, cost %d.' % (self.db_data.address,data_b,self.client.get_exec_time()))
         #print(self.db_data.address,self.db_data.areas,self.db_data.number,self.db_data.start,self.db_data.size,data_b,data_value)
@@ -299,7 +305,7 @@ class VcPlot(QObject):
         self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
-        self._line,=self.canvas.axes.plot(self.x,self.y)              
+        self._line,=self.canvas.axes.plot(self.x,self.y, markevery=10)              
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
@@ -311,13 +317,11 @@ class VcPlot(QObject):
         更新plot数据
         '''
         #print('come from %s'%msg) 
-        #print(self.x)
+
         self._line.set_data(self.x,self.y)        
         self.canvas.axes.relim()
         self.canvas.axes.autoscale_view() 
         self._line.figure.canvas.draw()
-        #self.ax.xaxis.set_major_locator(mpl.dates.MinuteLocator())
-        #self.ax.xaxis.set_minor_locator(mpl.dates.SecondLocator([10,20,30,40,50]))
 
         
 

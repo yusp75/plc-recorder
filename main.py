@@ -117,7 +117,7 @@ class Main(uiclass, base_class):
 
         # 定时刷新图形
         self.timer=QTimer()
-        self.timer.setInterval(200) #1s
+        self.timer.setInterval(1000) #1s
         self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据
@@ -256,15 +256,12 @@ class Main(uiclass, base_class):
         if canvas is None:
             layout = QVBoxLayout()
             layout.setSizeConstraint(QLayout.SetMinimumSize)
-            #widget=MyWidget()
-            #widget.setLayout(layout)
             canvas=MyCanvas() 
             self.curve_layout.addWidget(NavigationToolbar(canvas, self))
             self.curve_layout.addWidget(canvas)
 
-            #self.curve_layout.addWidget(widget)
             #新建实例，连接放下信号
-            #widget.sig_item_droped.connect(self.my_plot) 
+            canvas.sig_item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
         for vc in canvas.queue_plot:
