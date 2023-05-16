@@ -277,7 +277,7 @@ class Main(ui_class, base_class):
                     pass                   
                 
                 #实例化
-                vc_plot=VcPlot(vc.name,vc.db_data.address,canvas,vc.db_data.delay,vc.db_data.data_type) 
+                vc_plot=VcPlot(vc.name,vc.db_data.address,canvas,vc.db_data.delay,vc.db_data.data_type,True) 
             
                 #信号连接
                 #更新

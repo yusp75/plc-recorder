@@ -120,7 +120,7 @@ class Curve(ui_class, base_class):
 
     
         #实例化
-        vc_plot=VcPlot(name,address,canvas,None,None)               
+        vc_plot=VcPlot(name,address,canvas,None,None,False)               
         #信号连接
         #更新
         self.plot_update.connect(vc_plot.update_plot_xy)              

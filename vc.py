@@ -286,7 +286,7 @@ class VcPlot(QObject):
     sig_data_xy=Signal(str,str) #鼠标位置的点
     sig_update_y_value=Signal(dict) #信号：更新lengend后值
 
-    def __init__(self,name,address,canvas,delay,data_type):
+    def __init__(self,name,address,canvas,delay,data_type,live):
         super().__init__()
         self.name=name
         self.address=address
@@ -299,7 +299,7 @@ class VcPlot(QObject):
         self.y=[]
 
         #call plot
-        self.mplot()
+        self.mplot(live)
     
     @Slot(dict) #x,y,addr
     def move(self,data):
@@ -323,7 +323,7 @@ class VcPlot(QObject):
             #self.sig_update_y_value.emit({'p':self.ax,'value':data['y']})
             self.thread.set_xy(self.x,self.y)
             
-    def mplot(self):
+    def mplot(self,live):
         #self.ax=self.canvas.figure.subplots()
         self.canvas.axes.legend()
         self.canvas.axes.set_autoscale_on(True)
@@ -332,8 +332,9 @@ class VcPlot(QObject):
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
         self._line,=self.canvas.axes.plot(self.x,self.y, markevery=10) 
-        self.thread=VcplotThread(self._line,self.canvas) 
-        self.thread.start()      
+        if live:
+            self.thread=VcplotThread(self._line,self.canvas) 
+            self.thread.start()      
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
@@ -357,6 +358,7 @@ class VcPlot(QObject):
     @Slot(dict)
     def update_plot_xy(self,data):
         addr=data['addr']
+        print(addr)
         if self.address==addr:
             self.x=data['x']
             self.y=data['y']
