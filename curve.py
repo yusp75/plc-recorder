@@ -1,13 +1,16 @@
 from PySide2.QtWidgets import QApplication, QMainWindow, QWidget,QMessageBox
-from PySide2.QtGui import QPen
 from PySide2.QtCore import Qt,Slot,Signal
 from PySide2.QtGui import QStandardItemModel,QStandardItem
+from PySide2.QtUiTools import loadUiType
 
-from pyqtgraph import PlotWidget, plot
-import pyqtgraph as pg
+from matplotlib.backends.backend_qtagg import (
+    FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
+from matplotlib.figure import Figure
+
+
 from db import Db
 from ymenu import Menu
-from vc import VcPlot,Vc
+from vc import MyCanvas,VcPlot,Vc
 
 import sys
 import os
@@ -16,9 +19,9 @@ import datetime
 import random
 
         
-uiclass, baseclass = pg.Qt.loadUiType("curve.ui")
+ui_class, base_class = loadUiType("curve.ui")
 
-class Curve(uiclass, baseclass):
+class Curve(ui_class, base_class):
     '''
     历史曲线
     '''
@@ -91,39 +94,38 @@ class Curve(uiclass, baseclass):
     @Slot(dict)
     def my_plot(self, param):
         '''
-        param: 0-name, 1-widget
+        param: 0-name, 1-canvas
         双击菜单项，新增组件绘图；拖曳菜单项，在组件上增加绘图
         '''
 
         name=param['name']
         address=param['addr']
-        widget=param['widget']
+        canvas=param['canvas']
         msg=param['msg']
-        print(param['msg'])
 
-        if widget is None:
-            widget=QWidget() 
-            #新建widget要放到layout上
-            self.layout.addWidget(widget)
+        if canvas is None:
+            #layout = QVBoxLayout()
+            #layout.setSizeConstraint(QLayout.SetMinimumSize)
+            canvas=MyCanvas() 
+            self.curve_layout.addWidget(NavigationToolbar(canvas, self))
+            self.curve_layout.addWidget(canvas)
             #新建实例，连接放下信号
-            widget.sig_item_droped.connect(self.my_plot) 
+            canvas.sig_item_droped.connect(self.my_plot) 
 
         #检测是否已在plot队列
-        for plot in widget.queue_plot:
+        for plot in canvas.queue_plot:
             if plot.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
                 return               
 
-        title=widget.windowTitle()
-        widget.setTitle('%s %s:%s'%(title,name,address))
-        
+    
         #实例化
-        vc_plot=VcPlot(name,address,widget,None,None)               
+        vc_plot=VcPlot(name,address,canvas,None,None)               
         #信号连接
         #更新
         self.plot_update.connect(vc_plot.update_plot_xy)              
         #绘画队列
-        widget.queue_plot.append(vc_plot)
+        canvas.queue_plot.append(vc_plot)
 
     @Slot(str)
     def menu_dblclick(self, item):
@@ -133,7 +135,7 @@ class Curve(uiclass, baseclass):
         #新建plotwidget
         name=item['name']
         addr=item['addr']
-        self.my_plot({'name':name,'addr':addr,'widget':None,'msg':'new'})     
+        self.my_plot({'name':name,'addr':addr,'canvas':None,'msg':'new'})     
                
   
 if __name__ == '__main__':

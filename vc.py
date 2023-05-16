@@ -6,6 +6,7 @@ from PySide2.QtCore import (
     Signal,
     QMutex,
     QModelIndex,
+    QThread,
 )
 
 from PySide2.QtGui import (
@@ -24,6 +25,7 @@ import datetime
 import time
 import util 
 import concurrent.futures
+import _thread
 
 import matplotlib as mpl
 from matplotlib.figure import Figure
@@ -253,6 +255,29 @@ class Vc(QObject):
     def get_enable(self):
         return self.enable
 
+class VcplotThread(QThread):
+    '''
+    在线程更新plot
+    '''
+
+    def __init__(self,line,canvas):
+        super().__init__()
+        self.line=line
+        self.canvas=canvas
+        self.x=[]
+        self.y=[]
+
+    def set_xy(self,x,y):
+        self.x=x
+        self.y=y
+
+    def run(self):
+        while True:
+            QThread.msleep(100)
+            self.line.set_data(self.x,self.y)        
+            self.canvas.axes.relim()
+            self.canvas.axes.autoscale_view() 
+            self.line.figure.canvas.draw()
 
 class VcPlot(QObject):
     '''
@@ -293,9 +318,10 @@ class VcPlot(QObject):
             else:
                 self.y.append(data['y'])  
             
-            self.update_plot("self")
+            #self.update_plot("self")
             #update legend
             #self.sig_update_y_value.emit({'p':self.ax,'value':data['y']})
+            self.thread.set_xy(self.x,self.y)
             
     def mplot(self):
         #self.ax=self.canvas.figure.subplots()
@@ -305,7 +331,9 @@ class VcPlot(QObject):
         self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
-        self._line,=self.canvas.axes.plot(self.x,self.y, markevery=10)              
+        self._line,=self.canvas.axes.plot(self.x,self.y, markevery=10) 
+        self.thread=VcplotThread(self._line,self.canvas) 
+        self.thread.start()      
 
     @Slot(object,object)
     def item_clicked(self,obj,event):
@@ -317,11 +345,12 @@ class VcPlot(QObject):
         更新plot数据
         '''
         #print('come from %s'%msg) 
-
-        self._line.set_data(self.x,self.y)        
-        self.canvas.axes.relim()
-        self.canvas.axes.autoscale_view() 
-        self._line.figure.canvas.draw()
+        while True:
+            time.sleep(1)
+            self._line.set_data(self.x,self.y)        
+            self.canvas.axes.relim()
+            self.canvas.axes.autoscale_view() 
+            self._line.figure.canvas.draw_idle()
 
         
 
@@ -331,7 +360,10 @@ class VcPlot(QObject):
         if self.address==addr:
             self.x=data['x']
             self.y=data['y']
-            self.plot.setData(self.x,self.y)
+            self._line.set_data(self.x,self.y)
+            self.canvas.axes.relim()
+            self.canvas.axes.autoscale_view() 
+            self._line.figure.canvas.draw_idle()
     
     def get_plot(self):
         return (self.vid,self.plot)

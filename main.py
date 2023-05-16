@@ -36,7 +36,7 @@ import datetime
 import time
 import util
 
-uiclass, base_class = loadUiType("main.ui")
+ui_class, base_class = loadUiType("main.ui")
 MaxThreadCount=5 #线程池尺寸
 
 # 线程函数
@@ -75,7 +75,7 @@ class MyWorker(QRunnable):
 
 
 # 主函数
-class Main(uiclass, base_class):
+class Main(ui_class, base_class):
     sig_plot_update=Signal(str) #信号：更新图形
     sig_app_exited=Signal(bool) #信号：程序退出   
     sig_log_record=Signal(str,str) #信号：日志
@@ -93,8 +93,8 @@ class Main(uiclass, base_class):
         self.dbs=self.io.list_var
         self.client=self.io.client
         # action: history curve
-        #self.curve=Curve()
-        #self.action_his.triggered.connect(self.curve.show)
+        self.curve=Curve()
+        self.action_his.triggered.connect(self.curve.show)
         # action: start
         self.action_start.triggered.connect(self.start)
         # action: stop
@@ -118,7 +118,7 @@ class Main(uiclass, base_class):
         # 定时刷新图形
         self.timer=QTimer()
         self.timer.setInterval(1000) #1s
-        self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
+        #self.timer.timeout.connect(partial(self.sig_plot_update.emit,'hi'))
         
         # 数据
         self.db=Db()
@@ -245,7 +245,7 @@ class Main(uiclass, base_class):
     @Slot(dict)
     def my_plot(self, param):
         '''
-        param: 0-name, 1-widget
+        param: 0-name, 1-canvas
         双击菜单项，新增组件绘图；拖曳菜单项，在组件上增加绘图
         '''
 
