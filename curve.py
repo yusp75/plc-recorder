@@ -2,11 +2,11 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QWidget,QMessageBox
 from PySide2.QtCore import Qt,Slot,Signal
 from PySide2.QtGui import QStandardItemModel,QStandardItem
 from PySide2.QtUiTools import loadUiType
+from functools import partial
 
 from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
-
 
 from db import Db
 from ymenu import Menu
@@ -31,9 +31,12 @@ class Curve(ui_class, base_class):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle('历史曲线')
+
+        self.fields=[] #字段
+        self.vcs=[]
     
         # 查询按钮
-        self.btnQuery.clicked.connect(self.query_data)
+        self.btnQuery.clicked.connect(partial(self.query_data, None))
         self.btnNow.clicked.connect(self.time_now)
         #初始查询时间
         self.time_now()        
@@ -43,10 +46,6 @@ class Curve(ui_class, base_class):
         self.menu.item_changed.connect(self.menu_click)
         #连接双击信号
         self.menu.item_dblclicked.connect(self.menu_dblclick)
-        self.fields=[] #字段
-
-        self.vcs=[]
-
     
     #设置查询起始时间
     def time_now(self):            
@@ -59,23 +58,25 @@ class Curve(ui_class, base_class):
         r=random.randint(0,255)
         g=random.randint(0,255)
         b=random.randint(0,255)
-        return (r,g,b)
+        return (r,g,b)    
     
-    
-    #查询数据    
-    def query_data(self):
-        print('query_data...')
+    #查询数据
+    @Slot(list)    
+    def query_data(self,fields=None):
+        if fields is None:
+            fields=self.fields
+        print('query %s ...'%self.fields)
         dt1=self.dt1.dateTime().toPython()
         dt2=self.dt2.dateTime().toPython()
 
         m_db=Db()
-        if len(self.fields)==0:
+        if fields is None or len(fields)==0:
             msgBox=QMessageBox();
             msgBox.setText("查询变量表为空");
             msgBox.exec();
             return
 
-        names,data=m_db.query(dt1,dt2,self.fields)
+        names,data=m_db.query(dt1,dt2,fields)
         m_db.close()
         #print(data)
         for d in data:
@@ -135,7 +136,10 @@ class Curve(ui_class, base_class):
         #新建plotwidget
         name=item['name']
         addr=item['addr']
-        self.my_plot({'name':name,'addr':addr,'canvas':None,'msg':'new'})     
+        self.my_plot({'name':name,'addr':addr,'canvas':None,'msg':'new'})
+        #查询当前
+        self.query_data([name])
+             
                
   
 if __name__ == '__main__':

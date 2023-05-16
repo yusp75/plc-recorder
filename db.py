@@ -3,6 +3,7 @@ from peewee import *
 from datetime import datetime, timedelta
 from itertools import groupby
 import snap7
+import matplotlib as mpl
 
 db = SqliteDatabase('yu.db',pragmas={'journal_mode': 'wal','cache_size': -1024 * 128})
 
@@ -67,7 +68,7 @@ class Db:
             data.append({
                 'nm':q.name,
                 'addr':q.addr,
-                'tm':q.times,
+                'tm':mpl.dates.date2num(q.times),
                 'v':q.values,
                 't':q.data_type
                 })
