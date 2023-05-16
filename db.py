@@ -84,14 +84,16 @@ class Db:
             #utf_16_be 将1字节编码为2字节
             xv=1 if snap7.util.get_bool(xv,1,q.bit_pos) else 0
         #word
-        if q.data_type=='word':
+        elif q.data_type=='word':
             xv=snap7.util.get_int(xv,0)
         #int
-        if q.data_type=='int':
+        elif q.data_type=='int':
             xv=snap7.util.get_dint(xv,0)
         #real
-        if q.data_type=='real':
+        elif q.data_type=='real':
             xv=snap7.util.get_real(xv,0)
+        else:
+            print('xv value error')
         return xv,int(q.time.timestamp()) #x,y
             
    

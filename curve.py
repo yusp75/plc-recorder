@@ -81,6 +81,7 @@ class Curve(ui_class, base_class):
         #print(data)
         for d in data:
             #更新plot数据
+            #print(len(d['tm']),len(d['v']))
             self.plot_update.emit({'addr':d['addr'],'x':d['tm'],'y':d['v']}) 
     
     @Slot(list)
