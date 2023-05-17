@@ -2,6 +2,7 @@
 from peewee import *
 from datetime import datetime, timedelta
 from itertools import groupby
+from matplotlib import dates as mpl_dates
 import snap7
 import matplotlib as mpl
 
@@ -58,8 +59,7 @@ class Db:
         .where((Data.name.in_(fields)) & (Data.time.between(dt1,dt2)))
         .group_by(Data.name)
         .order_by(Data.time))
-        print('query, size:%d\n' % len(qs),fields)
-        
+        #print('query, size:%d\n' % len(qs),fields)
         names=[]
         data=[]
         for q in qs:
@@ -68,16 +68,18 @@ class Db:
             data.append({
                 'nm':q.name,
                 'addr':q.addr,
-                'tm':mpl.dates.date2num(q.times),
+                'tm':[mpl_dates.date2num(datetime.fromtimestamp(t)) for t in q.times],
                 'v':q.values,
                 't':q.data_type
                 })
         #view sql
         #print(qs)
-        return set(names),data
-  
-    # 转换数据库字符串值
-    def cal_q(self,q):        
+        return set(names),data   
+    
+    def cal_q(self,q):   
+        '''
+        转换数据库字符串到数值
+        '''     
         xv=bytearray(q.value.encode(encoding='utf_16_be'))
         #bool
         if q.data_type=='bool':  
