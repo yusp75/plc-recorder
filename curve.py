@@ -129,8 +129,9 @@ class Curve(ui_class, base_class):
         #绘画队列
         canvas.queue_plot.append(vc_plot)
 
-         #查询数据
+         #查询数据，刷新
         self.query_data([name])
+        vc_plot.refresh()
 
     @Slot(str)
     def menu_dblclick(self, item):
@@ -140,8 +141,7 @@ class Curve(ui_class, base_class):
         #新建plotwidget
         name=item['name']
         addr=item['addr']
-        self.my_plot({'name':name,'addr':addr,'canvas':None,'msg':'new'})             
-               
+        self.my_plot({'name':name,'addr':addr,'canvas':None,'msg':'new'}) 
   
 if __name__ == '__main__':
     app = QApplication(sys.argv)

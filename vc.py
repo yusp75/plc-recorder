@@ -348,10 +348,7 @@ class VcPlot(QObject):
         #print('come from %s'%msg) 
         while True:
             time.sleep(1)
-            self._line.set_data(self.x,self.y)        
-            self.canvas.axes.relim()
-            self.canvas.axes.autoscale_view() 
-            self._line.figure.canvas.draw_idle()
+            self.refresh()
 
         
 
@@ -362,23 +359,29 @@ class VcPlot(QObject):
             s1=len(data['x'])
             s2=len(data['y'])
             if s1>s2:
-                print('shape mismatch: x>y')
+                print('shape mismatch: x>y %d:%d'%(s1,s2))
                 self.x=data['x'][:s2]
                 self.y=data['y']
             elif s1<s2:
-                print('shape mismatch: x<y')
+                print('shape mismatch: x<y %d:%d'%(s1,s2))
                 self.x=data['x']
                 self.y=data['y'][:s1]
             else:
                 self.x=data['x']
-                self.y=data['y']
-            print(len(self.x),len(self.y))
-            self._line.set_data(self.x,self.y)
-            self.canvas.axes.autoscale_view() 
-            self.canvas.axes.relim()
+                self.y=data['y']            
             
-            self._line.figure.canvas.draw_idle()
+            self.refresh()
+            
     
+    def refresh(self):
+        '''
+        刷新
+        '''
+        self._line.set_data(self.x,self.y)
+        self.canvas.axes.autoscale_view() 
+        self.canvas.axes.relim()
+        self._line.figure.canvas.draw_idle()
+
     def get_plot(self):
         return (self.vid,self.plot)
     
