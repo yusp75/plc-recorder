@@ -330,7 +330,7 @@ class VcPlot(QObject):
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
         self._line,=self.canvas.axes.plot(self.x,self.y,label=self.name,markevery=10)
-        self.canvas.axes.legend(title='curve')  
+        self.canvas.axes.legend(title='curve',loc='upper right')  
         
         if live:
             self.thread=VcplotThread(self._line,self.canvas) 
