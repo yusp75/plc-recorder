@@ -323,15 +323,15 @@ class VcPlot(QObject):
             #self.sig_update_y_value.emit({'p':self.ax,'value':data['y']})
             self.thread.set_xy(self.x,self.y)
             
-    def mplot(self,live):
-        #self.ax=self.canvas.figure.subplots()
-        self.canvas.axes.legend()
+    def mplot(self,live):              
         self.canvas.axes.set_autoscale_on(True)
         self.canvas.axes.grid(True)
         self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
         
-        self._line,=self.canvas.axes.plot(self.x,self.y, markevery=10) 
+        self._line,=self.canvas.axes.plot(self.x,self.y,label=self.name,markevery=10)
+        self.canvas.axes.legend(title='curve')  
+        
         if live:
             self.thread=VcplotThread(self._line,self.canvas) 
             self.thread.start()      
