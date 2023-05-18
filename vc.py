@@ -328,7 +328,7 @@ class VcPlot(QObject):
         self.canvas.axes.grid(True)
         self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
-        #self.canvas.axes.autoscale(enable=True, axis='x')
+        self.canvas.axes.yaxis.limit_range_for_scale(0,5) 
 
         if self.data_type=='bool':
             self.canvas.axes.set_ylim(0,5)
