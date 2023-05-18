@@ -328,6 +328,12 @@ class VcPlot(QObject):
         self.canvas.axes.grid(True)
         self.canvas.axes.set_title(self.name)
         self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
+        #self.canvas.axes.autoscale(enable=True, axis='x')
+
+        if self.data_type=='bool':
+            self.canvas.axes.set_ylim(0,5)
+            self.canvas.axes.set_ybound(0,1)
+            self.canvas.axes.set_yticks([0,1,2,3,4,5])
         
         self._line,=self.canvas.axes.plot(self.x,self.y,label=self.name,markevery=10)
         self.legend=self.canvas.axes.legend(title='curve',loc='upper right') 

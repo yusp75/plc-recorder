@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from db import Db
 from ymenu import Menu
 from vc import MyCanvas,VcPlot,Vc
+from util import read_var
 
 import sys
 import os
@@ -33,7 +34,7 @@ class Curve(ui_class, base_class):
         self.setWindowTitle('历史曲线')
 
         self.fields=[] #字段
-        self.vcs=[]
+        self.dbs=read_var()
     
         # 查询按钮
         self.btnQuery.clicked.connect(partial(self.query_data, None))
@@ -119,18 +120,19 @@ class Curve(ui_class, base_class):
             if plot.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
                 return 
-           
-        #实例化
-        vc_plot=VcPlot(name,address,canvas,None,None,False)               
-        #信号连接
-        #更新
-        self.plot_update.connect(vc_plot.update_plot_xy)              
-        #绘画队列
-        canvas.queue_plot.append(vc_plot)
-         #查询数据，刷新
-        self.query_data([name])
-        vc_plot.refresh()
-                
+        for db in self.dbs:
+            if db.name==name:  
+                #实例化
+                vc_plot=VcPlot(name,address,canvas,None,db.data_type,False)               
+                #信号连接
+                #更新
+                self.plot_update.connect(vc_plot.update_plot_xy)              
+                #绘画队列
+                canvas.queue_plot.append(vc_plot)
+                 #查询数据，刷新
+                self.query_data([name])
+                vc_plot.refresh()
+                break
 
     @Slot(str)
     def menu_dblclick(self, item):
