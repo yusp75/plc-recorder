@@ -27,13 +27,12 @@ class Curve(ui_class, base_class):
     '''
     plot_update=Signal(dict) #有别于main的信号
 
-    def __init__(self,dbs):
+    def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle('历史曲线')
 
         self.fields=[] #字段
-        self.dbs=dbs
         self.vcs=[]
     
         # 查询按钮
@@ -122,7 +121,7 @@ class Curve(ui_class, base_class):
                 return 
            
         #实例化
-        vc_plot=VcPlot(name,address,canvas,None,vc.db_data.data_type,False)               
+        vc_plot=VcPlot(name,address,canvas,None,None,False)               
         #信号连接
         #更新
         self.plot_update.connect(vc_plot.update_plot_xy)              
