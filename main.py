@@ -272,13 +272,9 @@ class Main(ui_class, base_class):
         for vc in self.vcs:
             if vc.name==name:                    
                 #vc.enable=True
-                #布尔y设置0-1，其他格数设置为1
-                if vc.db_data.data_type=='bool':
-                    pass                   
-                
+
                 #实例化
                 vc_plot=VcPlot(vc.name,vc.db_data.address,canvas,vc.db_data.delay,vc.db_data.data_type,True) 
-            
                 #信号连接
                 #更新
                 self.sig_plot_update.connect(vc_plot.update_plot)

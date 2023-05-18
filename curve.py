@@ -27,12 +27,13 @@ class Curve(ui_class, base_class):
     '''
     plot_update=Signal(dict) #有别于main的信号
 
-    def __init__(self):
+    def __init__(self,dbs):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle('历史曲线')
 
         self.fields=[] #字段
+        self.dbs=dbs
         self.vcs=[]
     
         # 查询按钮
@@ -82,7 +83,6 @@ class Curve(ui_class, base_class):
         for d in data:
             #更新plot数据
             #print(len(d['tm']),len(d['v']))
-            print(d['tm'][0])
             self.plot_update.emit({'addr':d['addr'],'x':d['tm'],'y':d['v']}) 
     
     @Slot(list)
@@ -119,20 +119,19 @@ class Curve(ui_class, base_class):
         for plot in canvas.queue_plot:
             if plot.name==name and msg=='drop':
                 print('droped but existed, skip:'+name)
-                return               
-
-    
+                return 
+           
         #实例化
-        vc_plot=VcPlot(name,address,canvas,None,None,False)               
+        vc_plot=VcPlot(name,address,canvas,None,vc.db_data.data_type,False)               
         #信号连接
         #更新
         self.plot_update.connect(vc_plot.update_plot_xy)              
         #绘画队列
         canvas.queue_plot.append(vc_plot)
-
          #查询数据，刷新
         self.query_data([name])
         vc_plot.refresh()
+                
 
     @Slot(str)
     def menu_dblclick(self, item):

@@ -3,6 +3,7 @@ from PySide2.QtCore import (
     QIODevice,
     QObject,
     Signal,
+    Qt
 )
 from PySide2.QtWidgets import (
     QApplication,
@@ -13,8 +14,12 @@ from PySide2.QtWidgets import (
     QLineEdit, 
     QTableWidget, 
     QHeaderView,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QTreeView
 )
+
+from PySide2.QtGui import QStandardItemModel
+
 from snap7.types import Areas
 from myaml import Myaml
 
@@ -34,6 +39,7 @@ class Io(QObject):
     '''
     sig_log_record=Signal(str,str) #信号：日志
 
+
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -51,6 +57,8 @@ class Io(QObject):
         self.pb_cancel = self.window.findChild(QPushButton, 'pbCancel')
         self.pb_cancel.clicked.connect(self.window.close)
 
+        self.data_view=self.window.findChild(QTreeView,'data_view')
+
         self.client=None
         self.ip='192.168.0.10'
         self.slot='3'
@@ -64,6 +72,9 @@ class Io(QObject):
         # 导入变量
         self.list_var=[]
         self.read_var()
+
+        self.model=self.createVarModel(self)
+        self.data_view.setModel(self.model)
 
     # 测试plc连接
     def link_plc(self):
@@ -99,7 +110,8 @@ class Io(QObject):
         self.table1 = self.window.findChild(QTableWidget, 'table1')
         self.table1.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table1.setColumnWidth(7, 20)
-        self.table1.setHorizontalHeaderLabels(('device', 'address', 'area', 'number','start','size','bit'))
+        #数据类型，时基 为下拉选择，启用 为check
+        self.table1.setHorizontalHeaderLabels(('设备', '地址', '数据类型', '时基','启用','size','bit'))
 
     def show(self):
         self.window.show()
@@ -115,7 +127,7 @@ class Io(QObject):
                 myaml=Myaml('var/'+file)
                 var = myaml.parse()
                 self.list_var=self.list_var+var
-        # print('var list:', self.list_var)
+        #print('var list:', self.list_var)
         # 写到表格
         self.label_num.setText(str(len(self.list_var)))
         # self.table1.setRowCount(len(self.list_var))
@@ -132,6 +144,14 @@ class Io(QObject):
         if (self.client is None) or (not self.client.get_connected()):
             is_ok=False
         return is_ok
+
+    # tree model
+    def createVarModel(self,parent):
+        model = QStandardItemModel(0, 3, parent)
+        model.setHeaderData(0, Qt.Horizontal, "From")
+        model.setHeaderData(1, Qt.Horizontal, "Subject")
+        model.setHeaderData(2, Qt.Horizontal, "Date")
+        return model
     
 
 if __name__ == '__main__':
