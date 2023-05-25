@@ -28,6 +28,7 @@ from functools import partial
 from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
+import matplotlib as mpl
 
 from vc import MyWidget,MyCanvas,VcPlot,Vc
 

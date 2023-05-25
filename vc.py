@@ -26,6 +26,7 @@ import time
 import util 
 import concurrent.futures
 import _thread
+import types
 
 import matplotlib as mpl
 from matplotlib.figure import Figure
@@ -38,6 +39,15 @@ mpl.use("QtAgg")
 mpl.rcParams["path.simplify_threshold"]=0.5
 
 mutex=QMutex()
+
+
+def press_zoom(self, event):
+    '''
+    matplotlib按键缩放
+    '''
+    event.key='x'
+    matplotlib.backends.backend_tkagg.NavigationToolbar2TkAgg.press_zoom(self,event)
+
 
 class MyWidget(QWidget):
     '''
@@ -90,11 +100,11 @@ class MyCanvas(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.queue_plot=[]
-        
-        #super init
         super().__init__(fig)
         self.setMinimumHeight(210)
         self.setAcceptDrops(True)
+        #self.toolbar.press_zoom=types.MethodType(press_zoom, self.toolbar)
+
 
     def dragEnterEvent(self, event):
         '''
@@ -327,13 +337,13 @@ class VcPlot(QObject):
         self.canvas.axes.set_autoscale_on(True)
         self.canvas.axes.grid(True)
         self.canvas.axes.set_title(self.name)
-        self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') ) 
-        self.canvas.axes.yaxis.limit_range_for_scale(0,5) 
+        self.canvas.axes.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S') )         
 
         if self.data_type=='bool':
-            self.canvas.axes.set_ylim(0,5)
+            self.canvas.axes.set_ylim(0,3)
             self.canvas.axes.set_ybound(0,1)
-            self.canvas.axes.set_yticks([0,1,2,3,4,5])
+            self.canvas.axes.set_yticks([0,1,2,3])
+            self.canvas.axes.yaxis.limit_range_for_scale(0,1) 
         
         self._line,=self.canvas.axes.plot(self.x,self.y,label=self.name,markevery=10)
         self.legend=self.canvas.axes.legend(title='curve',loc='upper right') 

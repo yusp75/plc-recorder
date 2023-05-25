@@ -7,6 +7,7 @@ from functools import partial
 from matplotlib.backends.backend_qtagg import (
     FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
+import matplotlib as mpl
 
 from db import Db
 from ymenu import Menu
@@ -18,9 +19,19 @@ import os
 import util
 import datetime
 import random
+import types
 
         
 ui_class, base_class = loadUiType("curve.ui")
+
+
+def press_zoom(self, event):
+    '''
+    matplotlib按键缩放
+    '''
+    event.key='x'
+    NavigationToolbar.press_zoom(self,event)
+
 
 class Curve(ui_class, base_class):
     '''
@@ -110,7 +121,10 @@ class Curve(ui_class, base_class):
             #layout = QVBoxLayout()
             #layout.setSizeConstraint(QLayout.SetMinimumSize)
             canvas=MyCanvas() 
-            self.curve_layout.addWidget(NavigationToolbar(canvas, self))
+            toolbar=NavigationToolbar(canvas, self)
+            toolbar.press_zoom=types.MethodType(press_zoom, toolbar)
+
+            self.curve_layout.addWidget(toolbar)
             self.curve_layout.addWidget(canvas)
             #新建实例，连接放下信号
             canvas.sig_item_droped.connect(self.my_plot) 
